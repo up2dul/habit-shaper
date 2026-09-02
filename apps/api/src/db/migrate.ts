@@ -2,7 +2,10 @@ import { fileURLToPath } from "node:url";
 
 import { migrate } from "drizzle-orm/mysql2/migrator";
 
-import { db, pool } from "./client.js";
+import { databaseEnv } from "../config/database-env.js";
+import { createDatabaseClient } from "./client.js";
+
+const { db, pool } = createDatabaseClient(databaseEnv);
 
 try {
   const migrationsFolder = fileURLToPath(

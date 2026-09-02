@@ -1,16 +1,15 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
+import { env } from "./config/env.js";
 import { canQueryDatabase } from "./db/health.js";
-
-const webOrigin = process.env.WEB_ORIGIN ?? "http://localhost:5173";
 
 const app = new Hono();
 
 app.use(
   "*",
   cors({
-    origin: webOrigin,
+    origin: env.webOrigin,
     credentials: true,
   })
 );

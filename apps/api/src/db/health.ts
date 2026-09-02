@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 
-import { db } from "./client.js";
+import { db } from "./database.js";
 
 export async function canQueryDatabase(): Promise<boolean> {
   try {
