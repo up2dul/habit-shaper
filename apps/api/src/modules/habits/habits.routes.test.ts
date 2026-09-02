@@ -29,10 +29,15 @@ function setup(authenticated = true) {
   };
   const methods = {
     list: vi.fn().mockResolvedValue([habit]),
+    listToday: vi
+      .fn()
+      .mockResolvedValue([{ ...habit, state: "PENDING" as const, streak: 0 }]),
     create: vi.fn().mockResolvedValue(habit),
     get: vi.fn().mockResolvedValue(habit),
     update: vi.fn().mockResolvedValue(habit),
     delete: vi.fn().mockResolvedValue(undefined),
+    setCompletion: vi.fn().mockResolvedValue(undefined),
+    setRelapse: vi.fn().mockResolvedValue(undefined),
   };
   const habitsService: HabitsServiceContract = methods;
   return { app: createApp(authService, habitsService), methods };
@@ -60,6 +65,72 @@ describe("habit routes", () => {
     ).toBe(200);
     expect(methods.list).toHaveBeenCalledWith(user.id);
     expect(methods.get).toHaveBeenCalledWith(user.id, habit.id);
+  });
+
+  it("returns Today-ready habits in one request", async () => {
+    const { app, methods } = setup();
+    const response = await app.request("/habits/today", { headers: cookie });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual([
+      expect.objectContaining({ id: habit.id, state: "PENDING", streak: 0 }),
+    ]);
+    expect(methods.listToday).toHaveBeenCalledOnce();
+    expect(methods.listToday).toHaveBeenCalledWith(user.id);
+  });
+
+  it("maps completion and relapse resources to idempotent service mutations", async () => {
+    const { app, methods } = setup();
+    const date = "2026-09-02";
+    for (const [resource, method] of [
+      ["completions", "PUT"],
+      ["completions", "DELETE"],
+      ["relapses", "PUT"],
+      ["relapses", "DELETE"],
+    ] as const) {
+      const response = await app.request(
+        `/habits/${habit.id}/${resource}/${date}`,
+        { method, headers: cookie }
+      );
+      expect(response.status).toBe(204);
+    }
+    expect(methods.setCompletion).toHaveBeenNthCalledWith(
+      1,
+      user.id,
+      habit.id,
+      date,
+      true
+    );
+    expect(methods.setCompletion).toHaveBeenNthCalledWith(
+      2,
+      user.id,
+      habit.id,
+      date,
+      false
+    );
+    expect(methods.setRelapse).toHaveBeenNthCalledWith(
+      1,
+      user.id,
+      habit.id,
+      date,
+      true
+    );
+    expect(methods.setRelapse).toHaveBeenNthCalledWith(
+      2,
+      user.id,
+      habit.id,
+      date,
+      false
+    );
+  });
+
+  it("rejects malformed tracking dates before calling the service", async () => {
+    const { app, methods } = setup();
+    const response = await app.request(
+      `/habits/${habit.id}/completions/not-a-date`,
+      { method: "PUT", headers: cookie }
+    );
+    expect(response.status).toBe(400);
+    expect(methods.setCompletion).not.toHaveBeenCalled();
   });
 
   it("accepts BUILD schedules and rejects BREAK schedules", async () => {

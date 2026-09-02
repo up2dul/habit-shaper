@@ -145,4 +145,118 @@ describe("HabitsService", () => {
     );
     expect(transaction.delete).toBeUndefined();
   });
+
+  it("rejects a completion for the wrong habit type", async () => {
+    const database = ownedHabitDatabase({ type: "BREAK" });
+    const service = new HabitsService(database as never, () => "2026-09-02");
+    await expect(
+      service.setCompletion("user-1", "habit-1", "2026-09-02", true)
+    ).rejects.toMatchObject({ code: "HABIT_EVENT_TYPE_MISMATCH" });
+  });
+
+  it("rejects pre-start and future tracking dates", async () => {
+    const database = ownedHabitDatabase({ startDate: "2026-09-01" });
+    const service = new HabitsService(database as never, () => "2026-09-02");
+    await expect(
+      service.setRelapse("user-1", "habit-1", "2026-08-31", true)
+    ).rejects.toMatchObject({ code: "HABIT_DATE_BEFORE_START" });
+    await expect(
+      service.setRelapse("user-1", "habit-1", "2026-09-03", true)
+    ).rejects.toMatchObject({ code: "HABIT_DATE_IN_FUTURE" });
+  });
+
+  it("enforces ownership before changing tracking facts", async () => {
+    const database = ownedHabitDatabase(null);
+    const service = new HabitsService(database as never, () => "2026-09-02");
+    await expect(
+      service.setRelapse("other-user", "habit-1", "2026-09-02", true)
+    ).rejects.toMatchObject({ code: "HABIT_NOT_FOUND" });
+  });
+
+  it("rejects completions on unscheduled BUILD dates", async () => {
+    const database = trackingDatabase([
+      { effectiveFrom: "2026-09-01", dayOfWeek: 1 },
+    ]);
+    const service = new HabitsService(database as never, () => "2026-09-02");
+    await expect(
+      service.setCompletion("user-1", "habit-1", "2026-09-02", true)
+    ).rejects.toMatchObject({ code: "BUILD_DATE_NOT_SCHEDULED" });
+  });
+
+  it("uses duplicate-safe writes and idempotent deletes", async () => {
+    const database = trackingDatabase([
+      { effectiveFrom: "2026-09-01", dayOfWeek: 3 },
+    ]);
+    const service = new HabitsService(database as never, () => "2026-09-02");
+    await service.setCompletion("user-1", "habit-1", "2026-09-02", true);
+    await service.setCompletion("user-1", "habit-1", "2026-09-02", false);
+    expect(database.onDuplicateKeyUpdate).toHaveBeenCalledWith({
+      set: { eventType: "COMPLETION" },
+    });
+    expect(database.deleteWhere).toHaveBeenCalledOnce();
+  });
 });
+
+function habitRecord(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "habit-1",
+    userId: "user-1",
+    name: "Habit",
+    description: null,
+    type: "BREAK" as const,
+    startDate: "2026-09-01",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+function ownedHabitDatabase(overrides: Record<string, unknown> | null) {
+  const record = overrides === null ? [] : [habitRecord(overrides)];
+  return {
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({ limit: vi.fn().mockResolvedValue(record) })),
+      })),
+    })),
+  };
+}
+
+function trackingDatabase(
+  scheduleRows: Array<{ effectiveFrom: string; dayOfWeek: number }>
+) {
+  let selectCount = 0;
+  const onDuplicateKeyUpdate = vi.fn().mockResolvedValue(undefined);
+  const deleteWhere = vi.fn().mockResolvedValue(undefined);
+  return {
+    onDuplicateKeyUpdate,
+    deleteWhere,
+    select: vi.fn(() => {
+      selectCount += 1;
+      if (selectCount % 2 === 1) {
+        return {
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi
+                .fn()
+                .mockResolvedValue([habitRecord({ type: "BUILD" })]),
+            })),
+          })),
+        };
+      }
+      return {
+        from: vi.fn(() => ({
+          innerJoin: vi.fn(() => ({
+            where: vi.fn(() => ({
+              orderBy: vi.fn().mockResolvedValue(scheduleRows),
+            })),
+          })),
+        })),
+      };
+    }),
+    insert: vi.fn(() => ({
+      values: vi.fn(() => ({ onDuplicateKeyUpdate })),
+    })),
+    delete: vi.fn(() => ({ where: deleteWhere })),
+  };
+}
