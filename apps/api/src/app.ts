@@ -9,9 +9,15 @@ import {
   AuthService,
   type AuthServiceContract,
 } from "./modules/auth/auth.service.js";
+import { createHabitsRoutes } from "./modules/habits/habits.routes.js";
+import {
+  HabitsService,
+  type HabitsServiceContract,
+} from "./modules/habits/habits.service.js";
 
 export function createApp(
-  authService: AuthServiceContract = new AuthService()
+  authService: AuthServiceContract = new AuthService(),
+  habitsService: HabitsServiceContract = new HabitsService()
 ) {
   const app = new Hono();
 
@@ -54,7 +60,8 @@ export function createApp(
 
       return c.json({ status: "ok" });
     })
-    .route("/auth", createAuthRoutes(authService));
+    .route("/auth", createAuthRoutes(authService))
+    .route("/habits", createHabitsRoutes(authService, habitsService));
 }
 
 export const app = createApp();
