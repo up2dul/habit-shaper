@@ -12,6 +12,7 @@ import {
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -82,6 +83,7 @@ export function ProgressPage({ search }: { search: ProgressSearch }) {
           </Button>
           <h1 className="text-2xl font-medium">Progress</h1>
         </div>
+        <ThemeToggle />
       </header>
       <div className="flex flex-col gap-3">
         <ToggleGroup

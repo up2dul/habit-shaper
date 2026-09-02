@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,8 +78,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
   return (
     <main
       id="main-content"
-      className="flex min-h-svh items-center justify-center p-4"
+      className="relative flex min-h-svh items-center justify-center p-4"
     >
+      <ThemeToggle className="absolute top-4 right-4" />
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>

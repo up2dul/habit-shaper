@@ -13,6 +13,7 @@ import {
 } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -404,9 +405,10 @@ function Page({
           </Button>
           <h1 className="text-2xl font-medium">{title}</h1>
         </div>
-        {action && (
-          <div className="flex w-full flex-wrap gap-2 sm:w-auto">{action}</div>
-        )}
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+          <ThemeToggle />
+          {action}
+        </div>
       </header>
       {children}
     </main>
