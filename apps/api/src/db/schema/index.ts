@@ -8,6 +8,7 @@ import {
   mysqlTable,
   primaryKey,
   timestamp,
+  text,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -55,6 +56,7 @@ export const habits = mysqlTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     name: varchar({ length: 255 }).notNull(),
+    description: text(),
     type: mysqlEnum(["BUILD", "BREAK"]).notNull(),
     startDate: date("start_date", { mode: "string" }).notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
