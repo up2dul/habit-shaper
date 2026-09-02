@@ -8,7 +8,7 @@ Local development benefits from directly exposed Vite and API ports. VM deployme
 
 ## Decision
 
-Local/reviewer setup:
+Host development setup:
 
 ```text
 web → localhost:5173
@@ -16,6 +16,18 @@ api → localhost:3000
 ```
 
 Configure CORS and credentials correctly.
+
+Docker Compose reviewer setup:
+
+```text
+browser → localhost:5173
+            /      → web
+            /api/* → api (Docker network)
+```
+
+The same-origin Compose proxy prevents session cookies from depending on the
+hostname used to open the application and avoids browser traffic competing for
+the API's published host port.
 
 Production VM setup:
 
@@ -35,6 +47,7 @@ Use Caddy or Nginx as the reverse proxy. Keep web/API/MySQL internal rather than
 
 ## Consequences
 
-- Local setup stays easy to inspect and debug.
+- Host development stays easy to inspect and debug.
+- The Compose reviewer flow uses reliable same-origin session cookies.
 - Production gets one origin, simpler secure-cookie behavior, and a smaller public attack surface.
 - Application code remains mostly identical; environment configuration changes by deployment.

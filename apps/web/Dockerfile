@@ -15,7 +15,7 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY apps/api apps/api
 COPY apps/web apps/web
 
-ARG VITE_API_URL=http://localhost:3000
+ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 
 RUN pnpm --filter @habit-shaper/api build && pnpm --filter web build

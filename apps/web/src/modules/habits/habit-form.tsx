@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ApiError } from "@/lib/api";
 
@@ -71,6 +72,11 @@ export function HabitForm({ habit }: { habit?: Habit }) {
                 ? { ...common, type: "BUILD", scheduleDays: value.scheduleDays }
                 : { ...common, type: "BREAK" }
             );
+        toast.add({
+          title: habit ? "Habit updated" : "Habit created",
+          description: `${saved.name} is ready to shape your days.`,
+          type: "success",
+        });
         await navigate({
           to: "/habits/$habitId",
           params: { habitId: saved.id },
@@ -156,6 +162,7 @@ export function HabitForm({ habit }: { habit?: Habit }) {
                   <Input
                     value={habit.type === "BUILD" ? "Build" : "Break"}
                     disabled
+                    aria-label="Habit type"
                   />
                   <FieldDescription>
                     Habit type cannot be changed after creation.

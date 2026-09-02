@@ -55,6 +55,7 @@ import {
   ProgressValue,
 } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "@/components/ui/toast";
 import { ApiError } from "@/lib/api";
 
 import type { Goal } from "./goals.api";
@@ -157,12 +158,22 @@ function GoalCard({ goal }: { goal: Goal }) {
               <AlertDialogAction
                 variant="destructive"
                 disabled={remove.isPending}
-                onClick={() =>
-                  remove.mutateAsync({
-                    habitId: goal.habitId,
-                    goalId: goal.id,
-                  })
-                }
+                onClick={async () => {
+                  try {
+                    await remove.mutateAsync({
+                      habitId: goal.habitId,
+                      goalId: goal.id,
+                    });
+                    toast.add({ title: "Goal deleted", type: "success" });
+                  } catch (error) {
+                    toast.add({
+                      title: "Couldn’t delete goal",
+                      description:
+                        error instanceof Error ? error.message : "Try again.",
+                      type: "error",
+                    });
+                  }
+                }}
               >
                 {remove.isPending && <Spinner data-icon="inline-start" />}
                 Delete goal
@@ -208,6 +219,11 @@ function GoalForm({
             targetSuccessfulDays,
           });
         }
+        toast.add({
+          title: goal ? "Goal updated" : "Goal added",
+          description: `${targetSuccessfulDays} successful days`,
+          type: "success",
+        });
         onCancel();
       } catch (error) {
         setSubmitError(

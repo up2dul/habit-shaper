@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "@/components/ui/toast";
 import { ApiError } from "@/lib/api";
 
 import { authMutations } from "./auth.options";
@@ -57,6 +59,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
             password: value.password,
           });
         }
+        toast.add({
+          title: isRegister ? "Account created" : "Welcome back",
+          description: "Your habits are ready.",
+          type: "success",
+        });
         await navigate({ to: "/" });
       } catch (error) {
         setSubmitError(
@@ -69,7 +76,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
   });
 
   return (
-    <main className="flex min-h-svh items-center justify-center p-4">
+    <main
+      id="main-content"
+      className="relative flex min-h-svh items-center justify-center p-4"
+    >
+      <ThemeToggle className="absolute top-4 right-4" />
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>

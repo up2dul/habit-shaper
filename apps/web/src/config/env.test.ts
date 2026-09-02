@@ -18,7 +18,13 @@ describe("web environment", () => {
   it("rejects non-HTTP URLs", () => {
     expect(() =>
       parseWebEnv({ VITE_API_URL: "ftp://example.com" }, "development")
-    ).toThrow(/must use the http or https protocol/);
+    ).toThrow(/must be a root-relative path or use the http\/https protocol/);
+  });
+
+  it("accepts a same-origin API path in production", () => {
+    expect(parseWebEnv({ VITE_API_URL: "/api" }, "production")).toEqual({
+      apiUrl: "/api",
+    });
   });
 
   it("accepts a valid production API URL", () => {

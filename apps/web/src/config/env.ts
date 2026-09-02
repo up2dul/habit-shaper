@@ -4,10 +4,19 @@ type EnvironmentSource = Record<string, string | undefined>;
 
 const webInputSchema = z.object({
   VITE_API_URL: z
-    .url()
-    .refine((value) => ["http:", "https:"].includes(new URL(value).protocol), {
-      message: "must use the http or https protocol",
-    })
+    .string()
+    .refine(
+      (value) => {
+        if (value.startsWith("/")) return !value.startsWith("//");
+
+        const result = z.url().safeParse(value);
+        return (
+          result.success &&
+          ["http:", "https:"].includes(new URL(value).protocol)
+        );
+      },
+      { message: "must be a root-relative path or use the http/https protocol" }
+    )
     .optional(),
 });
 
