@@ -10,6 +10,11 @@ import {
   AuthService,
   type AuthServiceContract,
 } from "./modules/auth/auth.service.js";
+import { createGoalsRoutes } from "./modules/goals/goals.routes.js";
+import {
+  GoalsService,
+  type GoalsServiceContract,
+} from "./modules/goals/goals.service.js";
 import { createHabitsRoutes } from "./modules/habits/habits.routes.js";
 import {
   HabitsService,
@@ -18,7 +23,8 @@ import {
 
 export function createApp(
   authService: AuthServiceContract = new AuthService(),
-  habitsService: HabitsServiceContract = new HabitsService()
+  habitsService: HabitsServiceContract = new HabitsService(),
+  goalsService: GoalsServiceContract = new GoalsService()
 ) {
   const app = new Hono();
 
@@ -67,7 +73,8 @@ export function createApp(
       return c.json({ status: "ok" });
     })
     .route("/auth", createAuthRoutes(authService))
-    .route("/habits", createHabitsRoutes(authService, habitsService));
+    .route("/habits", createHabitsRoutes(authService, habitsService))
+    .route("/habits", createGoalsRoutes(authService, goalsService));
 }
 
 export const app = createApp();
