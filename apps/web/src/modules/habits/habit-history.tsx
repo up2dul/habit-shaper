@@ -22,6 +22,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -30,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "@/components/ui/toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 import type {
@@ -59,7 +67,10 @@ export function ProgressPage({ search }: { search: ProgressSearch }) {
     navigate({ to: "/progress", search: { ...search, ...next } });
 
   return (
-    <main className="mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 sm:p-6">
+    <main
+      id="main-content"
+      className="mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 sm:p-6"
+    >
       <header className="flex items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <Button
@@ -120,10 +131,24 @@ export function ProgressPage({ search }: { search: ProgressSearch }) {
           </SelectContent>
         </Select>
       </div>
-      <HistoryView
-        data={{ ...data, habits }}
-        onMonthChange={(month) => void update({ month })}
-      />
+      {habits.length === 0 ? (
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <WarningIcon aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>No habits match these filters</EmptyTitle>
+            <EmptyDescription>
+              Choose another type or select all habits to see progress.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <HistoryView
+          data={{ ...data, habits }}
+          onMonthChange={(month) => void update({ month })}
+        />
+      )}
     </main>
   );
 }
@@ -315,7 +340,17 @@ function HistoryRecord({
             variant={active ? "outline" : "default"}
             disabled={mutation.isPending}
             onClick={() =>
-              mutation.mutate({ habitId: habit.id, date: day.date })
+              mutation.mutate(
+                { habitId: habit.id, date: day.date },
+                {
+                  onSuccess: () =>
+                    toast.add({
+                      title: "History updated",
+                      description: longDate(day.date),
+                      type: "success",
+                    }),
+                }
+              )
             }
           >
             {mutation.isPending ? (
@@ -327,12 +362,11 @@ function HistoryRecord({
             )}
             {mutation.isPending ? "Updating…" : actionLabel}
           </Button>
-          <p aria-live="polite" className="text-muted-foreground text-sm">
-            {mutation.isError
-              ? mutation.error.message
-              : mutation.isSuccess
-                ? "History updated."
-                : ""}
+          <p
+            role={mutation.isError ? "alert" : undefined}
+            className="text-destructive text-sm"
+          >
+            {mutation.isError ? mutation.error.message : ""}
           </p>
         </CardContent>
       )}

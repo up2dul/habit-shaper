@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "@/components/ui/toast";
 import { ApiError } from "@/lib/api";
 
 import { authMutations } from "./auth.options";
@@ -57,6 +58,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
             password: value.password,
           });
         }
+        toast.add({
+          title: isRegister ? "Account created" : "Welcome back",
+          description: "Your habits are ready.",
+          type: "success",
+        });
         await navigate({ to: "/" });
       } catch (error) {
         setSubmitError(
@@ -69,7 +75,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
   });
 
   return (
-    <main className="flex min-h-svh items-center justify-center p-4">
+    <main
+      id="main-content"
+      className="flex min-h-svh items-center justify-center p-4"
+    >
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>

@@ -42,6 +42,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "@/components/ui/toast";
 import { authMutations, authQueries } from "@/modules/auth/auth.options";
 
 import { GoalManager } from "./goal-manager";
@@ -62,13 +63,22 @@ export function TodayPage() {
     <Page
       title="Today"
       action={
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             disabled={logout.isPending}
             onClick={async () => {
-              await logout.mutateAsync();
-              await navigate({ to: "/login" });
+              try {
+                await logout.mutateAsync();
+                await navigate({ to: "/login" });
+              } catch (error) {
+                toast.add({
+                  title: "Couldn’t sign out",
+                  description:
+                    error instanceof Error ? error.message : "Try again.",
+                  type: "error",
+                });
+              }
             }}
           >
             Sign out
@@ -213,7 +223,17 @@ function TodayHabitCard({ habit }: { habit: TodayHabit }) {
           variant={isUndo ? "outline" : "default"}
           disabled={mutation.isPending}
           onClick={() =>
-            mutation.mutate({ habitId: habit.id, date: localToday() })
+            mutation.mutate(
+              { habitId: habit.id, date: localToday() },
+              {
+                onSuccess: () =>
+                  toast.add({
+                    title: isUndo ? "Update undone" : "Today updated",
+                    description: `${habit.name}: ${label.toLowerCase()}`,
+                    type: "success",
+                  }),
+              }
+            )
           }
         >
           {mutation.isPending ? (
@@ -227,12 +247,11 @@ function TodayHabitCard({ habit }: { habit: TodayHabit }) {
           )}
           {mutation.isPending ? "Updating…" : label}
         </Button>
-        <p className="text-muted-foreground text-sm" aria-live="polite">
-          {mutation.isError
-            ? mutation.error.message
-            : mutation.isSuccess
-              ? "Today’s status was updated."
-              : ""}
+        <p
+          className="text-destructive text-sm"
+          role={mutation.isError ? "alert" : undefined}
+        >
+          {mutation.isError ? mutation.error.message : ""}
         </p>
       </CardContent>
     </Card>
@@ -332,8 +351,22 @@ export function HabitDetailPage({ habitId }: { habitId: string }) {
               variant="destructive"
               disabled={mutation.isPending}
               onClick={async () => {
-                await mutation.mutateAsync(habitId);
-                await navigate({ to: "/" });
+                try {
+                  await mutation.mutateAsync(habitId);
+                  toast.add({
+                    title: "Habit deleted",
+                    description: `“${habit.name}” and its history were removed.`,
+                    type: "success",
+                  });
+                  await navigate({ to: "/" });
+                } catch (error) {
+                  toast.add({
+                    title: "Couldn’t delete habit",
+                    description:
+                      error instanceof Error ? error.message : "Try again.",
+                    type: "error",
+                  });
+                }
               }}
             >
               {mutation.isPending && <Spinner data-icon="inline-start" />}Delete
@@ -356,8 +389,11 @@ function Page({
   children: React.ReactNode;
 }) {
   return (
-    <main className="mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 sm:p-6">
-      <header className="flex items-center justify-between gap-4">
+    <main
+      id="main-content"
+      className="mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 sm:p-6"
+    >
+      <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex flex-col gap-1">
           <Button
             variant="link"
@@ -368,7 +404,9 @@ function Page({
           </Button>
           <h1 className="text-2xl font-medium">{title}</h1>
         </div>
-        {action}
+        {action && (
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">{action}</div>
+        )}
       </header>
       {children}
     </main>
