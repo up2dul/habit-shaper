@@ -33,6 +33,10 @@ export const habitIdSchema = z.strictObject({
   habitId: z.uuid(),
 });
 
+export const habitLogParamsSchema = habitIdSchema.extend({
+  date: z.iso.date(),
+});
+
 export type CreateHabitInput = z.output<typeof createHabitSchema>;
 export type UpdateHabitInput = z.output<typeof updateHabitSchema>;
 export type Weekday = z.output<typeof weekdaySchema>;
