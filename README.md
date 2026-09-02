@@ -3,13 +3,42 @@
 Habit Shaper is a small habit-building and habit-breaking tracker with streaks,
 weekly progress, history, and contextual goals.
 
-## Run with Docker Compose
+## Getting started
 
-The primary reviewer path requires only Docker and Docker Compose.
+### Clone the repository
 
 ```bash
 git clone https://github.com/up2dul/habit-shaper.git
 cd habit-shaper
+```
+
+### Local setup
+
+Node.js 22+ and pnpm 10+ are required for direct local development. Install
+dependencies and create the local environment file:
+
+```bash
+pnpm install
+cp .env.example .env
+```
+
+### Local run
+
+Start the API and web development servers in separate terminals:
+
+```bash
+pnpm dev:api
+pnpm dev:web
+```
+
+The web app is available at <http://localhost:5173>. Direct local development
+uses the API at <http://localhost:3000> and requires a running MySQL instance.
+
+### Run through Docker
+
+The primary reviewer path requires only Docker and Docker Compose.
+
+```bash
 cp .env.example .env
 docker compose up --build
 ```
@@ -45,17 +74,17 @@ private to the Compose network.
 Copy `.env.example` to `.env` for local Compose. Values with local defaults can
 be left unchanged.
 
-| Variable | Purpose |
-| --- | --- |
-| `WEB_PORT` | Host port for the web UI; default `5173`. |
-| `API_PORT` | Host port for local API debugging; default `3000`. |
-| `WEB_ORIGIN` | Browser origin accepted for unsafe API requests. |
-| `VITE_API_URL` | Public API base URL compiled into the web app; `/api` enables same-origin proxying. |
-| `MYSQL_PORT` | Loopback-only host port for local MySQL debugging; default `3306`. |
-| `MYSQL_DATABASE` | MySQL database and API database name. |
-| `MYSQL_USER` | MySQL application user and API database user. |
-| `MYSQL_PASSWORD` | MySQL application password and API database password. |
-| `MYSQL_ROOT_PASSWORD` | MySQL root bootstrap password. |
+| Variable              | Purpose                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| `WEB_PORT`            | Host port for the web UI; default `5173`.                                           |
+| `API_PORT`            | Host port for local API debugging; default `3000`.                                  |
+| `WEB_ORIGIN`          | Browser origin accepted for unsafe API requests.                                    |
+| `VITE_API_URL`        | Public API base URL compiled into the web app; `/api` enables same-origin proxying. |
+| `MYSQL_PORT`          | Loopback-only host port for local MySQL debugging; default `3306`.                  |
+| `MYSQL_DATABASE`      | MySQL database and API database name.                                               |
+| `MYSQL_USER`          | MySQL application user and API database user.                                       |
+| `MYSQL_PASSWORD`      | MySQL application password and API database password.                               |
+| `MYSQL_ROOT_PASSWORD` | MySQL root bootstrap password.                                                      |
 
 Do not commit `.env` or production secrets. In production, provide the
 database values and `WEB_ORIGIN` through the deployment environment rather than
@@ -78,12 +107,7 @@ cookies are `Secure`.
 
 ## Development and verification
 
-Node.js 22+ and pnpm 10+ are needed only for direct local development:
-
 ```bash
-pnpm install
-pnpm dev:web
-pnpm dev:api
 pnpm test
 pnpm lint
 pnpm format:check
