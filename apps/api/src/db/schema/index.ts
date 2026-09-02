@@ -16,12 +16,19 @@ export const users = mysqlTable(
   "users",
   {
     id: varchar({ length: 36 }).primaryKey(),
+    name: varchar({ length: 100 }).notNull(),
     email: varchar({ length: 320 }).notNull(),
     passwordHash: varchar("password_hash", { length: 255 }).notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
   },
-  (table) => [uniqueIndex("users_email_unique").on(table.email)]
+  (table) => [
+    uniqueIndex("users_email_unique").on(table.email),
+    check(
+      "users_name_trimmed_nonempty_check",
+      sql`${table.name} = trim(${table.name}) and char_length(${table.name}) >= 1`
+    ),
+  ]
 );
 
 export const sessions = mysqlTable(

@@ -1,0 +1,2 @@
+ALTER TABLE `users` ADD `name` varchar(100) NOT NULL;--> statement-breakpoint
+ALTER TABLE `users` ADD CONSTRAINT `users_name_trimmed_nonempty_check` CHECK (`users`.`name` = trim(`users`.`name`) and char_length(`users`.`name`) >= 1);
