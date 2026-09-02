@@ -9,6 +9,7 @@ import type { AuthServiceContract, AuthUser } from "../auth/auth.service.js";
 import {
   createHabitSchema,
   habitIdSchema,
+  habitLogParamsSchema,
   updateHabitSchema,
 } from "./habits.schema.js";
 import type { HabitsServiceContract } from "./habits.service.js";
@@ -30,12 +31,51 @@ export function createHabitsRoutes(
   });
 
   return routes
+    .get("/today", async (c) =>
+      c.json(await habitsService.listToday(c.var.user.id), 200)
+    )
     .get("/", async (c) => c.json(await habitsService.list(c.var.user.id), 200))
     .post("/", validate("json", createHabitSchema), async (c) =>
       c.json(
         await habitsService.create(c.var.user.id, c.req.valid("json")),
         201
       )
+    )
+    .put(
+      "/:habitId/completions/:date",
+      validate("param", habitLogParamsSchema),
+      async (c) => {
+        const { habitId, date } = c.req.valid("param");
+        await habitsService.setCompletion(c.var.user.id, habitId, date, true);
+        return c.body(null, 204);
+      }
+    )
+    .delete(
+      "/:habitId/completions/:date",
+      validate("param", habitLogParamsSchema),
+      async (c) => {
+        const { habitId, date } = c.req.valid("param");
+        await habitsService.setCompletion(c.var.user.id, habitId, date, false);
+        return c.body(null, 204);
+      }
+    )
+    .put(
+      "/:habitId/relapses/:date",
+      validate("param", habitLogParamsSchema),
+      async (c) => {
+        const { habitId, date } = c.req.valid("param");
+        await habitsService.setRelapse(c.var.user.id, habitId, date, true);
+        return c.body(null, 204);
+      }
+    )
+    .delete(
+      "/:habitId/relapses/:date",
+      validate("param", habitLogParamsSchema),
+      async (c) => {
+        const { habitId, date } = c.req.valid("param");
+        await habitsService.setRelapse(c.var.user.id, habitId, date, false);
+        return c.body(null, 204);
+      }
     )
     .get("/:habitId", validate("param", habitIdSchema), async (c) =>
       c.json(
