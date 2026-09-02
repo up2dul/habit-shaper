@@ -253,6 +253,8 @@ A global Hono error handler maps typed application errors to HTTP responses.
 
 Services should express semantic errors; HTTP status mapping remains in the HTTP layer.
 
+Error codes are enumerated once (`ERROR_CODES`) with a central registry defining each code's default message and HTTP status. `AppError(code)` derives both from the registry, with an optional per-instance message override for dynamic messages. The HTTP layer applies the status mapping.
+
 Use named HTTP status constants rather than unexplained magic numbers if desired, while still passing explicit statuses to Hono for accurate typed response inference.
 
 ## 9. Core data model

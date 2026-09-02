@@ -25,6 +25,8 @@ Use a consistent error envelope:
 
 Use a global Hono error handler for application-error-to-HTTP mapping.
 
+Centralize every error code the API can emit in one registry. `ERROR_CODES` enumerates the codes; the registry defines each code's default message and HTTP status; `AppError(code)` derives both, with an optional per-instance message override for dynamic messages. Services throw semantic codes only; the HTTP layer (`onError`) applies the status mapping. HTTP status constants are named (e.g. `HttpStatus.NOT_FOUND`) rather than unexplained numeric literals.
+
 ## Alternatives considered
 
 - `/api/v1` from day one.
