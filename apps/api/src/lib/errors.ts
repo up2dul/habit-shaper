@@ -3,6 +3,7 @@ import { HttpStatus, type HttpStatusCode } from "./http-status.js";
 export const ERROR_CODES = {
   VALIDATION_ERROR: "VALIDATION_ERROR",
   UNAUTHORIZED: "UNAUTHORIZED",
+  INVALID_ORIGIN: "INVALID_ORIGIN",
   INTERNAL_ERROR: "INTERNAL_ERROR",
   DATABASE_UNAVAILABLE: "DATABASE_UNAVAILABLE",
   INVALID_CREDENTIALS: "INVALID_CREDENTIALS",
@@ -31,6 +32,10 @@ const ERROR_DEFINITIONS = {
   [ERROR_CODES.UNAUTHORIZED]: {
     status: HttpStatus.UNAUTHORIZED,
     message: "Authentication required",
+  },
+  [ERROR_CODES.INVALID_ORIGIN]: {
+    status: HttpStatus.FORBIDDEN,
+    message: "Request origin is not allowed",
   },
   [ERROR_CODES.INTERNAL_ERROR]: {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
