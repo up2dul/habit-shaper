@@ -1,4 +1,11 @@
-import { PlusIcon, TargetIcon, TrashIcon } from "@phosphor-icons/react";
+import {
+  ArrowCounterClockwiseIcon,
+  CheckIcon,
+  PlusIcon,
+  TargetIcon,
+  TrashIcon,
+  WarningIcon,
+} from "@phosphor-icons/react";
 import {
   useMutation,
   useQueryClient,
@@ -38,12 +45,13 @@ import { Spinner } from "@/components/ui/spinner";
 import { authMutations, authQueries } from "@/modules/auth/auth.options";
 
 import { HabitForm } from "./habit-form";
+import type { TodayHabit } from "./habits.api";
 import { habitMutations, habitQueries } from "./habits.options";
 
 const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function TodayPage() {
-  const { data: habits } = useSuspenseQuery(habitQueries.list());
+  const { data: habits } = useSuspenseQuery(habitQueries.today());
   const { data: user } = useSuspenseQuery(authQueries.currentUser());
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -77,9 +85,9 @@ export function TodayPage() {
             <EmptyMedia variant="icon">
               <TargetIcon />
             </EmptyMedia>
-            <EmptyTitle>No habits yet</EmptyTitle>
+            <EmptyTitle>Nothing to track today</EmptyTitle>
             <EmptyDescription>
-              Create a build habit or break a pattern to shape your day.
+              Enjoy the clear space, or create another habit to shape your day.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
@@ -89,42 +97,141 @@ export function TodayPage() {
           </EmptyContent>
         </Empty>
       ) : (
-        <section className="flex flex-col gap-3">
-          {habits.map((habit) => (
-            <Card key={habit.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex flex-col gap-1">
-                    <CardTitle>
-                      <Link
-                        to="/habits/$habitId"
-                        params={{ habitId: habit.id }}
-                      >
-                        {habit.name}
-                      </Link>
-                    </CardTitle>
-                    <CardDescription>
-                      {habit.description || `Started ${habit.startDate}`}
-                    </CardDescription>
-                  </div>
-                  <Badge variant="secondary">
-                    {habit.type === "BUILD" ? "Build" : "Break"}
-                  </Badge>
-                </div>
-              </CardHeader>
-              {habit.type === "BUILD" && (
-                <CardContent className="text-muted-foreground text-sm">
-                  {habit.scheduleDays
-                    .map((day) => weekdayLabels[day])
-                    .join(" · ")}
-                </CardContent>
-              )}
-            </Card>
-          ))}
-        </section>
+        <div className="flex flex-col gap-6">
+          <TodaySection
+            title="Build"
+            description="Actions you want to complete today."
+            habits={habits.filter((habit) => habit.type === "BUILD")}
+          />
+          <TodaySection
+            title="Break"
+            description="Patterns you are leaving behind today."
+            habits={habits.filter((habit) => habit.type === "BREAK")}
+          />
+        </div>
       )}
     </Page>
   );
+}
+
+function TodaySection({
+  title,
+  description,
+  habits,
+}: {
+  title: string;
+  description: string;
+  habits: TodayHabit[];
+}) {
+  if (habits.length === 0) return null;
+  return (
+    <section className="flex flex-col gap-3" aria-labelledby={`${title}-title`}>
+      <div className="flex flex-col gap-1">
+        <h2 id={`${title}-title`} className="text-lg font-medium">
+          {title}
+        </h2>
+        <p className="text-muted-foreground text-sm">{description}</p>
+      </div>
+      {habits.map((habit) => (
+        <TodayHabitCard key={habit.id} habit={habit} />
+      ))}
+    </section>
+  );
+}
+
+function TodayHabitCard({ habit }: { habit: TodayHabit }) {
+  const queryClient = useQueryClient();
+  const action =
+    habit.type === "BUILD"
+      ? habit.state === "COMPLETED"
+        ? habitMutations.undoCompletion
+        : habitMutations.markCompletion
+      : habit.state === "RELAPSE"
+        ? habitMutations.undoRelapse
+        : habitMutations.recordRelapse;
+  const mutation = useMutation(action(queryClient));
+  const isUndo = habit.state === "COMPLETED" || habit.state === "RELAPSE";
+  const label =
+    habit.type === "BUILD"
+      ? isUndo
+        ? "Undo"
+        : "Done"
+      : isUndo
+        ? "Undo"
+        : "Log relapse";
+  const stateLabel =
+    habit.state === "COMPLETED"
+      ? "Completed today"
+      : habit.state === "PENDING"
+        ? "Pending today"
+        : habit.state === "RELAPSE"
+          ? "Relapse logged today"
+          : "Clean today";
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-col gap-1">
+            <CardTitle className="truncate">
+              <Link to="/habits/$habitId" params={{ habitId: habit.id }}>
+                {habit.name}
+              </Link>
+            </CardTitle>
+            <CardDescription>{stateLabel}</CardDescription>
+          </div>
+          <Badge variant={isUndo ? "default" : "secondary"}>{stateLabel}</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="text-muted-foreground flex flex-col gap-1 text-sm">
+          <span>
+            {habit.type === "BUILD"
+              ? `${habit.streak} completed occurrence${habit.streak === 1 ? "" : "s"} in a row`
+              : `${habit.streak}-day clean streak`}
+          </span>
+          {habit.type === "BUILD" && (
+            <span>
+              {habit.scheduleDays.map((day) => weekdayLabels[day]).join(" · ")}
+            </span>
+          )}
+        </div>
+        <Button
+          className="min-h-11 w-full"
+          variant={isUndo ? "outline" : "default"}
+          disabled={mutation.isPending}
+          onClick={() =>
+            mutation.mutate({ habitId: habit.id, date: localToday() })
+          }
+        >
+          {mutation.isPending ? (
+            <Spinner data-icon="inline-start" />
+          ) : isUndo ? (
+            <ArrowCounterClockwiseIcon data-icon="inline-start" />
+          ) : habit.type === "BUILD" ? (
+            <CheckIcon data-icon="inline-start" />
+          ) : (
+            <WarningIcon data-icon="inline-start" />
+          )}
+          {mutation.isPending ? "Updating…" : label}
+        </Button>
+        <p className="text-muted-foreground text-sm" aria-live="polite">
+          {mutation.isError
+            ? mutation.error.message
+            : mutation.isSuccess
+              ? "Today’s status was updated."
+              : ""}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function localToday(): string {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function CreateHabitPage() {
