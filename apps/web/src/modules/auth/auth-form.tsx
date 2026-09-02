@@ -36,12 +36,21 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const loginMutation = useMutation(authMutations.login(queryClient));
   const registerMutation = useMutation(authMutations.register(queryClient));
   const form = useForm({
-    defaultValues: { name: "", email: "", password: "" },
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
     onSubmit: async ({ value }) => {
       setSubmitError(undefined);
       try {
         if (isRegister) {
-          await registerMutation.mutateAsync(value);
+          await registerMutation.mutateAsync({
+            name: value.name,
+            email: value.email,
+            password: value.password,
+          });
         } else {
           await loginMutation.mutateAsync({
             email: value.email,
@@ -138,6 +147,35 @@ export function AuthForm({ mode }: { mode: Mode }) {
                   />
                 )}
               </form.Field>
+              {isRegister && (
+                <form.Field
+                  name="confirmPassword"
+                  validators={{
+                    onChangeListenTo: ["password"],
+                    onChange: ({ value, fieldApi }) => {
+                      if (!value) return "Confirm your password";
+                      return value === fieldApi.form.getFieldValue("password")
+                        ? undefined
+                        : "Passwords do not match";
+                    },
+                    onSubmit: ({ value, fieldApi }) => {
+                      if (!value) return "Confirm your password";
+                      return value === fieldApi.form.getFieldValue("password")
+                        ? undefined
+                        : "Passwords do not match";
+                    },
+                  }}
+                >
+                  {(field) => (
+                    <TextField
+                      field={field}
+                      label="Confirm password"
+                      type="password"
+                      autoComplete="new-password"
+                    />
+                  )}
+                </form.Field>
+              )}
             </FieldGroup>
           </form>
         </CardContent>
