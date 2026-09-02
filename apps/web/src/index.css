@@ -134,7 +134,13 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    background-image: radial-gradient(
+      circle at top,
+      color-mix(in oklch, var(--accent) 22%, transparent) 0,
+      transparent 28rem
+    );
+    background-attachment: fixed;
   }
 
   button:not(:disabled),
@@ -154,5 +160,20 @@
   ::selection {
     background: var(--secondary);
     color: var(--secondary-foreground);
+  }
+
+  :focus {
+    scroll-margin-block: 5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
