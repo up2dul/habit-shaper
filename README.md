@@ -12,6 +12,13 @@ git clone https://github.com/up2dul/habit-shaper.git
 cd habit-shaper
 ```
 
+If your GitHub SSH key is configured, use this clone URL instead:
+
+```bash
+git clone git@github.com:up2dul/habit-shaper.git
+cd habit-shaper
+```
+
 ### Local setup
 
 Node.js 22+ and pnpm 10+ are required for direct local development. Install
@@ -40,11 +47,11 @@ The primary reviewer path requires only Docker and Docker Compose.
 
 ```bash
 cp .env.example .env
-docker compose up --build
+docker compose up --build -d
 ```
 
 Open <http://localhost:5173>. Migrations run automatically before the API
-starts. To stop the stack, press `Ctrl-C` and run:
+starts. To stop the detached stack, run:
 
 ```bash
 docker compose down
