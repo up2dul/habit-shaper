@@ -3,6 +3,7 @@ import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
+  HeadContent,
   Outlet,
   redirect,
 } from "@tanstack/react-router";
@@ -26,8 +27,21 @@ import { habitQueries } from "@/modules/habits/habits.options";
 
 type RouterContext = { queryClient: QueryClient };
 const rootRoute = createRootRouteWithContext<RouterContext>()({
+  head: () => ({
+    meta: [
+      {
+        title: "Habit Shaper",
+      },
+      {
+        name: "description",
+        content:
+          "Shape your days by building habits you keep and breaking the ones you do not.",
+      },
+    ],
+  }),
   component: () => (
     <>
+      <HeadContent />
       <a
         href="#main-content"
         className="bg-primary text-primary-foreground focus-visible:ring-ring fixed top-3 left-3 z-50 -translate-y-20 rounded-lg px-4 py-3 font-medium transition-transform focus-visible:translate-y-0 focus-visible:ring-3"
@@ -49,12 +63,18 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   beforeLoad: redirectAuthenticated,
+  head: () => ({
+    meta: [{ title: "Sign in | Habit Shaper" }],
+  }),
   component: () => <AuthForm mode="login" />,
 });
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
   beforeLoad: redirectAuthenticated,
+  head: () => ({
+    meta: [{ title: "Create account | Habit Shaper" }],
+  }),
   component: () => <AuthForm mode="register" />,
 });
 const indexRoute = createRoute({
@@ -66,6 +86,9 @@ const indexRoute = createRoute({
     }
   },
   loader: ({ context }) => context.queryClient.query(habitQueries.today()),
+  head: () => ({
+    meta: [{ title: "Today | Habit Shaper" }],
+  }),
   component: TodayPage,
 });
 
@@ -83,6 +106,9 @@ const progressRoute = createRoute({
       search.type === "BUILD" || search.type === "BREAK" ? search.type : "ALL",
     ...(typeof search.habitId === "string" ? { habitId: search.habitId } : {}),
   }),
+  head: () => ({
+    meta: [{ title: "Progress | Habit Shaper" }],
+  }),
   component: () => <ProgressPage search={progressRoute.useSearch()} />,
 });
 
@@ -90,6 +116,9 @@ const createHabitRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/habits/new",
   beforeLoad: requireAuthentication,
+  head: () => ({
+    meta: [{ title: "Create habit | Habit Shaper" }],
+  }),
   component: CreateHabitPage,
 });
 
@@ -102,6 +131,13 @@ const habitDetailRoute = createRoute({
       context.queryClient.query(habitQueries.detail(params.habitId)),
       context.queryClient.query(goalQueries.list(params.habitId)),
     ]),
+  head: ({ loaderData }) => ({
+    meta: [
+      {
+        title: `${loaderData?.[0]?.name ?? "Habit"} | Habit Shaper`,
+      },
+    ],
+  }),
   component: () => {
     const { habitId } = habitDetailRoute.useParams();
     return <HabitDetailPage habitId={habitId} />;
@@ -114,6 +150,13 @@ const editHabitRoute = createRoute({
   beforeLoad: requireAuthentication,
   loader: ({ context, params }) =>
     context.queryClient.query(habitQueries.detail(params.habitId)),
+  head: ({ loaderData }) => ({
+    meta: [
+      {
+        title: `Edit ${loaderData?.name ?? "habit"} | Habit Shaper`,
+      },
+    ],
+  }),
   component: () => {
     const { habitId } = editHabitRoute.useParams();
     return <EditHabitPage habitId={habitId} />;
