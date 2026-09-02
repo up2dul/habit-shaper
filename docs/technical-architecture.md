@@ -26,14 +26,17 @@ The source brief requires a React frontend, Node.js + TypeScript backend, MySQL 
 
 ```text
 Browser
-  ├── http://localhost:5173 → React/Vite web
-  └── http://localhost:3000 → Hono API
-                                  │
-                                  ▼
-                              MySQL (Docker network)
+  └── http://localhost:5173 → React/Vite web
+                                └── /api/* → Hono API (Docker network)
+                                                │
+                                                ▼
+                                            MySQL
 ```
 
-Local development uses separate web and API origins. CORS and cookie credentials are configured explicitly.
+The Docker Compose reviewer flow proxies `/api/*` through the web container so
+browser requests and session cookies remain same-origin. Host-based Vite
+development may still call the separately exposed API port with CORS and cookie
+credentials configured explicitly.
 
 ### VM / production environment
 
