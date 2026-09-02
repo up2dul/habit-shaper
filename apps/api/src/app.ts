@@ -28,6 +28,16 @@ export function createApp(
 ) {
   const app = new Hono();
 
+  app.use("*", async (c, next) => {
+    if (["POST", "PATCH", "DELETE"].includes(c.req.method)) {
+      const origin = c.req.header("Origin");
+      if (origin !== undefined && origin !== env.webOrigin) {
+        throw new AppError(ERROR_CODES.INVALID_ORIGIN);
+      }
+    }
+    await next();
+  });
+
   app.use(
     "*",
     cors({

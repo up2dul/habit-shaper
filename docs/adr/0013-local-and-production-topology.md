@@ -39,6 +39,28 @@ https://habit.example.com/
 
 Use Caddy or Nginx as the reverse proxy. Keep web/API/MySQL internal rather than exposing their container ports publicly.
 
+The production application stack is started with:
+
+```bash
+WEB_ORIGIN=https://habit.example.com \
+MYSQL_PASSWORD='replace-me' MYSQL_ROOT_PASSWORD='replace-me-too' \
+docker compose -f docker-compose.yaml -f docker-compose.production.yaml up -d --build
+```
+
+The production override removes host port publication for `api`; an external
+TLS reverse proxy should publish HTTPS and route `/` to `web:5173`
+and `/api/*` to `api:3000` (or route both through the web container's nginx
+proxy). MySQL is only reachable on the Compose network. The API starts only
+after the one-shot `migrate` service succeeds, and its `/health` endpoint
+checks database availability.
+
+For local development, run `docker compose up -d mysql migrate api` and use
+`pnpm dev:web`; the API remains available at `http://localhost:3000` for
+debugging. Set `WEB_ORIGIN` to the browser origin when using a different web
+port. Session cookies are HttpOnly, path-scoped to `/`, SameSite=Lax, and
+Secure only in production. The browser should use the public `/api` path in
+production (`VITE_API_URL=/api`); no secrets are exposed to the frontend.
+
 ## Alternatives considered
 
 - Reverse proxy in every local workflow.
