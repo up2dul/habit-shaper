@@ -12,6 +12,13 @@ export type Habit = {
   createdAt: string;
   updatedAt: string;
 };
+export type TodayHabit = Pick<
+  Habit,
+  "id" | "name" | "description" | "type" | "startDate" | "scheduleDays"
+> & {
+  state: "COMPLETED" | "PENDING" | "CLEAN" | "RELAPSE";
+  streak: number;
+};
 export type CreateHabitInput = {
   name: string;
   description?: string | null;
@@ -25,6 +32,40 @@ export type UpdateHabitInput = Partial<
 
 export async function listHabits(): Promise<Habit[]> {
   return readResponse<Habit[]>(await api.habits.$get());
+}
+
+export async function listTodayHabits(): Promise<TodayHabit[]> {
+  return readResponse<TodayHabit[]>(await api.habits.today.$get());
+}
+
+export type TrackingMutation = { habitId: string; date: string };
+
+export async function markCompletion(input: TrackingMutation): Promise<void> {
+  const response = await api.habits[":habitId"].completions[":date"].$put({
+    param: input,
+  });
+  if (!response.ok) await readResponse(response);
+}
+
+export async function undoCompletion(input: TrackingMutation): Promise<void> {
+  const response = await api.habits[":habitId"].completions[":date"].$delete({
+    param: input,
+  });
+  if (!response.ok) await readResponse(response);
+}
+
+export async function recordRelapse(input: TrackingMutation): Promise<void> {
+  const response = await api.habits[":habitId"].relapses[":date"].$put({
+    param: input,
+  });
+  if (!response.ok) await readResponse(response);
+}
+
+export async function undoRelapse(input: TrackingMutation): Promise<void> {
+  const response = await api.habits[":habitId"].relapses[":date"].$delete({
+    param: input,
+  });
+  if (!response.ok) await readResponse(response);
 }
 
 export async function getHabit(habitId: string): Promise<Habit> {
