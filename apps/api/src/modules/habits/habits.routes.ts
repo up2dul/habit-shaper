@@ -10,6 +10,7 @@ import type { AuthServiceContract, AuthUser } from "../auth/auth.service.js";
 import {
   createHabitSchema,
   habitIdSchema,
+  habitHistoryQuerySchema,
   habitLogParamsSchema,
   updateHabitSchema,
 } from "./habits.schema.js";
@@ -33,6 +34,12 @@ export function createHabitsRoutes(
   return routes
     .get("/today", async (c) =>
       c.json(await habitsService.listToday(c.var.user.id), HttpStatus.OK)
+    )
+    .get("/history", validate("query", habitHistoryQuerySchema), async (c) =>
+      c.json(
+        await habitsService.history(c.var.user.id, c.req.valid("query")),
+        HttpStatus.OK
+      )
     )
     .get("/", async (c) =>
       c.json(await habitsService.list(c.var.user.id), HttpStatus.OK)
@@ -105,10 +112,10 @@ export function createHabitsRoutes(
     });
 }
 
-function validate<TTarget extends "json" | "param", TSchema extends z.ZodType>(
-  target: TTarget,
-  schema: TSchema
-) {
+function validate<
+  TTarget extends "json" | "param" | "query",
+  TSchema extends z.ZodType,
+>(target: TTarget, schema: TSchema) {
   return zValidator(target, schema, (result) => {
     if (!result.success) {
       throw new AppError(
