@@ -12,6 +12,20 @@ import {
 } from "./index.js";
 
 describe("database schema", () => {
+  it("stores entity IDs as UUID strings and session tokens separately", () => {
+    for (const table of [users, habits, habitSchedules, habitLogs, goals]) {
+      const id = getTableConfig(table).columns.find(
+        (column) => column.name === "id"
+      );
+
+      expect(id?.getSQLType()).toBe("varchar(36)");
+    }
+
+    expect(sessions.id.getSQLType()).toBe("varchar(128)");
+    expect(sessions.userId.getSQLType()).toBe("varchar(36)");
+    expect(habitScheduleDays.scheduleId.getSQLType()).toBe("varchar(36)");
+  });
+
   it("defines the required access paths and uniqueness rules", () => {
     expect(indexNames(users)).toContain("users_email_unique");
     expect(indexNames(sessions)).toEqual(
