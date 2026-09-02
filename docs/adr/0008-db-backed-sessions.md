@@ -8,7 +8,7 @@ The application needs email/password authentication but does not require statele
 
 ## Decision
 
-Use opaque server-side sessions stored in MySQL.
+Use opaque server-side sessions stored in MySQL. Session identifiers are credentials, not normal entity identifiers, so they use cryptographically secure random opaque tokens rather than the UUIDv7 strategy used for application entities.
 
 On login:
 
@@ -37,3 +37,4 @@ Naturally expired rows may remain in the DB for now but are invalid once `expire
 - The client never needs to read the credential.
 - Protected requests perform a session lookup.
 - The API is stateful with respect to shared session storage, which is acceptable for this application.
+- Session tokens remain deliberately separate from the application's UUIDv7 entity-ID strategy because possession of a session token grants authentication.
