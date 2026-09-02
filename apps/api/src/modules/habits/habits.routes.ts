@@ -3,7 +3,8 @@ import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import type { z } from "zod";
 
-import { AppError } from "../../lib/app-error.js";
+import { AppError, ERROR_CODES } from "../../lib/errors.js";
+import { HttpStatus } from "../../lib/http-status.js";
 import { SESSION_COOKIE } from "../auth/auth.routes.js";
 import type { AuthServiceContract, AuthUser } from "../auth/auth.service.js";
 import {
@@ -24,21 +25,22 @@ export function createHabitsRoutes(
   routes.use("*", async (c, next) => {
     const token = getCookie(c, SESSION_COOKIE);
     const user = token ? await authService.authenticate(token) : null;
-    if (!user)
-      throw new AppError("UNAUTHORIZED", "Authentication required", 401);
+    if (!user) throw new AppError(ERROR_CODES.UNAUTHORIZED);
     c.set("user", user);
     await next();
   });
 
   return routes
     .get("/today", async (c) =>
-      c.json(await habitsService.listToday(c.var.user.id), 200)
+      c.json(await habitsService.listToday(c.var.user.id), HttpStatus.OK)
     )
-    .get("/", async (c) => c.json(await habitsService.list(c.var.user.id), 200))
+    .get("/", async (c) =>
+      c.json(await habitsService.list(c.var.user.id), HttpStatus.OK)
+    )
     .post("/", validate("json", createHabitSchema), async (c) =>
       c.json(
         await habitsService.create(c.var.user.id, c.req.valid("json")),
-        201
+        HttpStatus.CREATED
       )
     )
     .put(
@@ -47,7 +49,7 @@ export function createHabitsRoutes(
       async (c) => {
         const { habitId, date } = c.req.valid("param");
         await habitsService.setCompletion(c.var.user.id, habitId, date, true);
-        return c.body(null, 204);
+        return c.body(null, HttpStatus.NO_CONTENT);
       }
     )
     .delete(
@@ -56,7 +58,7 @@ export function createHabitsRoutes(
       async (c) => {
         const { habitId, date } = c.req.valid("param");
         await habitsService.setCompletion(c.var.user.id, habitId, date, false);
-        return c.body(null, 204);
+        return c.body(null, HttpStatus.NO_CONTENT);
       }
     )
     .put(
@@ -65,7 +67,7 @@ export function createHabitsRoutes(
       async (c) => {
         const { habitId, date } = c.req.valid("param");
         await habitsService.setRelapse(c.var.user.id, habitId, date, true);
-        return c.body(null, 204);
+        return c.body(null, HttpStatus.NO_CONTENT);
       }
     )
     .delete(
@@ -74,13 +76,13 @@ export function createHabitsRoutes(
       async (c) => {
         const { habitId, date } = c.req.valid("param");
         await habitsService.setRelapse(c.var.user.id, habitId, date, false);
-        return c.body(null, 204);
+        return c.body(null, HttpStatus.NO_CONTENT);
       }
     )
     .get("/:habitId", validate("param", habitIdSchema), async (c) =>
       c.json(
         await habitsService.get(c.var.user.id, c.req.valid("param").habitId),
-        200
+        HttpStatus.OK
       )
     )
     .patch(
@@ -94,12 +96,12 @@ export function createHabitsRoutes(
             c.req.valid("param").habitId,
             c.req.valid("json")
           ),
-          200
+          HttpStatus.OK
         )
     )
     .delete("/:habitId", validate("param", habitIdSchema), async (c) => {
       await habitsService.delete(c.var.user.id, c.req.valid("param").habitId);
-      return c.body(null, 204);
+      return c.body(null, HttpStatus.NO_CONTENT);
     });
 }
 
@@ -107,16 +109,11 @@ function validate<TTarget extends "json" | "param", TSchema extends z.ZodType>(
   target: TTarget,
   schema: TSchema
 ) {
-  return zValidator(target, schema, (result, c) => {
+  return zValidator(target, schema, (result) => {
     if (!result.success) {
-      return c.json(
-        {
-          error: {
-            code: "VALIDATION_ERROR",
-            message: result.error.issues[0]?.message ?? "Invalid request",
-          },
-        },
-        400
+      throw new AppError(
+        ERROR_CODES.VALIDATION_ERROR,
+        result.error.issues[0]?.message ?? undefined
       );
     }
   });

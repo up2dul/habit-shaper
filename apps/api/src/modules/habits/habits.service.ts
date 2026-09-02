@@ -7,7 +7,7 @@ import {
   habitLogs,
   habits,
 } from "../../db/schema/index.js";
-import { AppError } from "../../lib/app-error.js";
+import { AppError, ERROR_CODES } from "../../lib/errors.js";
 import { createId } from "../../lib/id.js";
 import {
   calculateBreakStreak,
@@ -229,11 +229,7 @@ export class HabitsService implements HabitsServiceContract {
   ): Promise<Habit> {
     const existing = await this.findOwned(userId, habitId);
     if (existing.type === "BREAK" && input.scheduleDays) {
-      throw new AppError(
-        "BREAK_HABIT_SCHEDULE_NOT_ALLOWED",
-        "Break habits cannot have a weekday schedule",
-        400
-      );
+      throw new AppError(ERROR_CODES.BREAK_HABIT_SCHEDULE_NOT_ALLOWED);
     }
 
     await this.database.transaction(async (transaction) => {
@@ -311,11 +307,7 @@ export class HabitsService implements HabitsServiceContract {
     );
     const schedules = await this.loadScheduleVersions(habitId);
     if (!isBuildScheduledOn(record.startDate, schedules, date)) {
-      throw new AppError(
-        "BUILD_DATE_NOT_SCHEDULED",
-        "The build habit is not scheduled on this date",
-        400
-      );
+      throw new AppError(ERROR_CODES.BUILD_DATE_NOT_SCHEDULED);
     }
     await this.persistLog(habitId, date, "COMPLETION", completed);
   }
@@ -339,24 +331,15 @@ export class HabitsService implements HabitsServiceContract {
     const record = await this.findOwned(userId, habitId);
     if (record.type !== expectedType) {
       throw new AppError(
-        "HABIT_EVENT_TYPE_MISMATCH",
-        `This action is only valid for ${expectedType.toLowerCase()} habits`,
-        400
+        ERROR_CODES.HABIT_EVENT_TYPE_MISMATCH,
+        `This action is only valid for ${expectedType.toLowerCase()} habits`
       );
     }
     if (date < record.startDate) {
-      throw new AppError(
-        "HABIT_DATE_BEFORE_START",
-        "History cannot be changed before the habit starts",
-        400
-      );
+      throw new AppError(ERROR_CODES.HABIT_DATE_BEFORE_START);
     }
     if (date > this.today()) {
-      throw new AppError(
-        "HABIT_DATE_IN_FUTURE",
-        "Future history cannot be changed",
-        400
-      );
+      throw new AppError(ERROR_CODES.HABIT_DATE_IN_FUTURE);
     }
     return record;
   }
@@ -519,5 +502,5 @@ function maxDate(left: string, right: string): string {
 }
 
 function notFound(): never {
-  throw new AppError("HABIT_NOT_FOUND", "Habit not found", 404);
+  throw new AppError(ERROR_CODES.HABIT_NOT_FOUND);
 }

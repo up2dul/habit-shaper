@@ -27,12 +27,8 @@ class FakeAuthService implements AuthServiceContract {
 
   async login(input: LoginInput): Promise<AuthResult> {
     if (input.password !== "correct-password") {
-      const { AppError } = await import("../../lib/app-error.js");
-      throw new AppError(
-        "INVALID_CREDENTIALS",
-        "Email or password is incorrect",
-        401
-      );
+      const { AppError } = await import("../../lib/errors.js");
+      throw new AppError("INVALID_CREDENTIALS");
     }
     this.activeToken = "login-token";
     return {

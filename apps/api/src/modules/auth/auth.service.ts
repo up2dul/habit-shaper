@@ -5,7 +5,7 @@ import { and, eq, gt } from "drizzle-orm";
 
 import { db as applicationDb } from "../../db/database.js";
 import { sessions, users } from "../../db/schema/index.js";
-import { AppError } from "../../lib/app-error.js";
+import { AppError, ERROR_CODES } from "../../lib/errors.js";
 import { createId } from "../../lib/id.js";
 import type { LoginInput, RegisterInput } from "./auth.schema.js";
 
@@ -47,11 +47,7 @@ export class AuthService implements AuthServiceContract {
       });
     } catch (error) {
       if (isDuplicateEntry(error)) {
-        throw new AppError(
-          "EMAIL_ALREADY_REGISTERED",
-          "Email is already registered",
-          409
-        );
+        throw new AppError(ERROR_CODES.EMAIL_ALREADY_REGISTERED);
       }
       throw error;
     }
@@ -72,11 +68,7 @@ export class AuthService implements AuthServiceContract {
       .limit(1);
 
     if (!record || !(await verify(record.passwordHash, input.password))) {
-      throw new AppError(
-        "INVALID_CREDENTIALS",
-        "Email or password is incorrect",
-        401
-      );
+      throw new AppError(ERROR_CODES.INVALID_CREDENTIALS);
     }
 
     const sessionToken = createSessionToken();

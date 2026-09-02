@@ -4,7 +4,8 @@ import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import type { z } from "zod";
 
 import { env } from "../../config/env.js";
-import { AppError } from "../../lib/app-error.js";
+import { AppError, ERROR_CODES } from "../../lib/errors.js";
+import { HttpStatus } from "../../lib/http-status.js";
 import { loginSchema, registerSchema } from "./auth.schema.js";
 import type { AuthServiceContract, AuthUser } from "./auth.service.js";
 
@@ -17,41 +18,35 @@ export function createAuthRoutes(authService: AuthServiceContract) {
     .post("/register", validateJson(registerSchema), async (c) => {
       const result = await authService.register(c.req.valid("json"));
       writeSessionCookie(c, result.sessionToken);
-      return c.json(result.user, 201);
+      return c.json(result.user, HttpStatus.CREATED);
     })
     .post("/login", validateJson(loginSchema), async (c) => {
       const result = await authService.login(c.req.valid("json"));
       writeSessionCookie(c, result.sessionToken);
-      return c.json(result.user, 200);
+      return c.json(result.user, HttpStatus.OK);
     })
     .post("/logout", async (c) => {
       const token = getCookie(c, SESSION_COOKIE);
       if (token) await authService.logout(token);
       deleteCookie(c, SESSION_COOKIE, cookieOptions());
-      return c.body(null, 204);
+      return c.body(null, HttpStatus.NO_CONTENT);
     })
     .get("/me", async (c) => {
       const token = getCookie(c, SESSION_COOKIE);
       const user = token ? await authService.authenticate(token) : null;
-      if (!user)
-        throw new AppError("UNAUTHORIZED", "Authentication required", 401);
-      return c.json(user, 200);
+      if (!user) throw new AppError(ERROR_CODES.UNAUTHORIZED);
+      return c.json(user, HttpStatus.OK);
     });
 
   return routes;
 }
 
 function validateJson<TSchema extends z.ZodType>(schema: TSchema) {
-  return zValidator("json", schema, (result, c) => {
+  return zValidator("json", schema, (result) => {
     if (!result.success) {
-      return c.json(
-        {
-          error: {
-            code: "VALIDATION_ERROR",
-            message: result.error.issues[0]?.message ?? "Invalid request",
-          },
-        },
-        400
+      throw new AppError(
+        ERROR_CODES.VALIDATION_ERROR,
+        result.error.issues[0]?.message ?? undefined
       );
     }
   });
