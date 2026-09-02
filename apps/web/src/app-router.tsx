@@ -83,9 +83,6 @@ const progressRoute = createRoute({
       search.type === "BUILD" || search.type === "BREAK" ? search.type : "ALL",
     ...(typeof search.habitId === "string" ? { habitId: search.habitId } : {}),
   }),
-  loaderDeps: ({ search }) => ({ month: search.month }),
-  loader: ({ context, deps }) =>
-    context.queryClient.query(habitQueries.history(deps.month)),
   component: () => <ProgressPage search={progressRoute.useSearch()} />,
 });
 

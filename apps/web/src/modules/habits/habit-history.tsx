@@ -10,7 +10,7 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -57,13 +58,7 @@ export type ProgressSearch = {
 };
 
 export function ProgressPage({ search }: { search: ProgressSearch }) {
-  const { data } = useSuspenseQuery(habitQueries.history(search.month));
   const navigate = useNavigate();
-  const habits = data.habits.filter(
-    (habit) =>
-      (search.type === "ALL" || habit.type === search.type) &&
-      (!search.habitId || habit.id === search.habitId)
-  );
   const update = (next: Partial<ProgressSearch>) =>
     navigate({ to: "/progress", search: { ...search, ...next } });
 
@@ -85,54 +80,74 @@ export function ProgressPage({ search }: { search: ProgressSearch }) {
         </div>
         <ThemeToggle />
       </header>
-      <div className="flex flex-col gap-3">
-        <ToggleGroup
-          value={[search.type]}
-          onValueChange={(value) => {
-            const type = value[0] as ProgressFilter | undefined;
-            if (type) void update({ type, habitId: undefined });
-          }}
-          variant="outline"
-          spacing={0}
-          aria-label="Filter habits by type"
-        >
-          {(["ALL", "BUILD", "BREAK"] as const).map((value) => (
-            <ToggleGroupItem
-              key={value}
-              value={value}
-              aria-label={`Show ${value.toLowerCase()} habits`}
-            >
-              {value === "ALL" ? "All" : value === "BUILD" ? "Build" : "Break"}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-        <Select
-          value={search.habitId ?? "ALL"}
-          onValueChange={(value) =>
-            void update({
-              habitId: value === "ALL" ? undefined : String(value),
-            })
-          }
-        >
-          <SelectTrigger className="w-full" aria-label="Filter by habit">
-            <SelectValue placeholder="All habits" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="ALL">All habits</SelectItem>
-              {data.habits
-                .filter(
-                  (habit) => search.type === "ALL" || habit.type === search.type
-                )
-                .map((habit) => (
-                  <SelectItem key={habit.id} value={habit.id}>
-                    {habit.name}
-                  </SelectItem>
-                ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
+      <ToggleGroup
+        value={[search.type]}
+        onValueChange={(value) => {
+          const type = value[0] as ProgressFilter | undefined;
+          if (type) void update({ type, habitId: undefined });
+        }}
+        variant="outline"
+        spacing={0}
+        aria-label="Filter habits by type"
+      >
+        {(["ALL", "BUILD", "BREAK"] as const).map((value) => (
+          <ToggleGroupItem
+            key={value}
+            value={value}
+            aria-label={`Show ${value.toLowerCase()} habits`}
+          >
+            {value === "ALL" ? "All" : value === "BUILD" ? "Build" : "Break"}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+      <Suspense fallback={<HistorySkeleton showFilter />}>
+        <ProgressHistory search={search} update={update} />
+      </Suspense>
+    </main>
+  );
+}
+
+function ProgressHistory({
+  search,
+  update,
+}: {
+  search: ProgressSearch;
+  update: (next: Partial<ProgressSearch>) => void;
+}) {
+  const { data } = useSuspenseQuery(habitQueries.history(search.month));
+  const habits = data.habits.filter(
+    (habit) =>
+      (search.type === "ALL" || habit.type === search.type) &&
+      (!search.habitId || habit.id === search.habitId)
+  );
+  return (
+    <div className="flex flex-col gap-6">
+      <Select
+        value={search.habitId ?? "ALL"}
+        onValueChange={(value) =>
+          void update({
+            habitId: value === "ALL" ? undefined : String(value),
+          })
+        }
+      >
+        <SelectTrigger className="w-full" aria-label="Filter by habit">
+          <SelectValue placeholder="All habits" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value="ALL">All habits</SelectItem>
+            {data.habits
+              .filter(
+                (habit) => search.type === "ALL" || habit.type === search.type
+              )
+              .map((habit) => (
+                <SelectItem key={habit.id} value={habit.id}>
+                  {habit.name}
+                </SelectItem>
+              ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
       {habits.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>
@@ -151,14 +166,34 @@ export function ProgressPage({ search }: { search: ProgressSearch }) {
           onMonthChange={(month) => void update({ month })}
         />
       )}
-    </main>
+    </div>
   );
 }
 
 export function HabitHistoryPanel({ habitId }: { habitId: string }) {
   const [month, setMonth] = useState(currentMonth);
+  return (
+    <Suspense fallback={<HistorySkeleton showMetrics />}>
+      <HabitHistoryLoaded
+        habitId={habitId}
+        month={month}
+        onMonthChange={setMonth}
+      />
+    </Suspense>
+  );
+}
+
+function HabitHistoryLoaded({
+  habitId,
+  month,
+  onMonthChange,
+}: {
+  habitId: string;
+  month: string;
+  onMonthChange: (month: string) => void;
+}) {
   const { data } = useSuspenseQuery(habitQueries.history(month, habitId));
-  return <HistoryView data={data} onMonthChange={setMonth} showMetrics />;
+  return <HistoryView data={data} onMonthChange={onMonthChange} showMetrics />;
 }
 
 function HistoryView({
@@ -231,6 +266,41 @@ function HistoryView({
           ))
         )}
       </section>
+    </div>
+  );
+}
+
+function HistorySkeleton({
+  showFilter = false,
+  showMetrics = false,
+}: {
+  showFilter?: boolean;
+  showMetrics?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-5" aria-hidden="true">
+      {showFilter && <Skeleton className="h-11 w-full rounded-lg" />}
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="size-10 rounded-lg" />
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="size-10 rounded-lg" />
+      </div>
+      {showMetrics && (
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
+      )}
+      <div className="grid grid-cols-7 gap-1">
+        {Array.from({ length: 35 }, (_, index) => (
+          <Skeleton key={index} className="h-14 w-full rounded-lg" />
+        ))}
+      </div>
+      <Skeleton className="h-5 w-40" />
+      <div className="flex flex-col gap-3">
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-xl" />
+      </div>
     </div>
   );
 }
