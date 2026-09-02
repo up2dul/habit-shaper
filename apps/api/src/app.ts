@@ -3,7 +3,8 @@ import { cors } from "hono/cors";
 
 import { env } from "./config/env.js";
 import { canQueryDatabase } from "./db/health.js";
-import { AppError } from "./lib/app-error.js";
+import { AppError, ERROR_CODES } from "./lib/errors.js";
+import { HttpStatus } from "./lib/http-status.js";
 import { createAuthRoutes } from "./modules/auth/auth.routes.js";
 import {
   AuthService,
@@ -38,8 +39,13 @@ export function createApp(
     }
     console.error("Unhandled request error", error);
     return c.json(
-      { error: { code: "INTERNAL_ERROR", message: "Something went wrong" } },
-      500
+      {
+        error: {
+          code: ERROR_CODES.INTERNAL_ERROR,
+          message: "Something went wrong",
+        },
+      },
+      HttpStatus.INTERNAL_SERVER_ERROR
     );
   });
 
@@ -50,11 +56,11 @@ export function createApp(
         return c.json(
           {
             error: {
-              code: "DATABASE_UNAVAILABLE",
+              code: ERROR_CODES.DATABASE_UNAVAILABLE,
               message: "Database is unavailable",
             },
           },
-          503
+          HttpStatus.SERVICE_UNAVAILABLE
         );
       }
 
