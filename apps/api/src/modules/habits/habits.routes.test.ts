@@ -32,6 +32,11 @@ function setup(authenticated = true) {
     listToday: vi
       .fn()
       .mockResolvedValue([{ ...habit, state: "PENDING" as const, streak: 0 }]),
+    history: vi.fn().mockResolvedValue({
+      month: "2026-09",
+      today: "2026-09-02",
+      habits: [],
+    }),
     create: vi.fn().mockResolvedValue(habit),
     get: vi.fn().mockResolvedValue(habit),
     update: vi.fn().mockResolvedValue(habit),
@@ -76,6 +81,26 @@ describe("habit routes", () => {
     ]);
     expect(methods.listToday).toHaveBeenCalledOnce();
     expect(methods.listToday).toHaveBeenCalledWith(user.id);
+  });
+
+  it("returns validated month history in one request", async () => {
+    const { app, methods } = setup();
+    const response = await app.request(
+      `/habits/history?month=2026-09&habitId=${habit.id}`,
+      { headers: cookie }
+    );
+    expect(response.status).toBe(200);
+    expect(methods.history).toHaveBeenCalledWith(user.id, {
+      month: "2026-09",
+      habitId: habit.id,
+    });
+    expect(
+      (
+        await app.request("/habits/history?month=September", {
+          headers: cookie,
+        })
+      ).status
+    ).toBe(400);
   });
 
   it("maps completion and relapse resources to idempotent service mutations", async () => {

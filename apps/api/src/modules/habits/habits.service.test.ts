@@ -195,6 +195,58 @@ describe("HabitsService", () => {
     });
     expect(database.deleteWhere).toHaveBeenCalledOnce();
   });
+
+  it("derives month history and metrics in three aggregate queries", async () => {
+    const records = [
+      habitRecord({ type: "BUILD", startDate: "2026-09-02" }),
+      habitRecord({ id: "habit-2", type: "BREAK", startDate: "2026-09-01" }),
+    ];
+    const database = historyDatabase(
+      records,
+      [
+        { habitId: "habit-1", effectiveFrom: "2026-09-02", dayOfWeek: 3 },
+        { habitId: "habit-1", effectiveFrom: "2026-09-07", dayOfWeek: 1 },
+      ],
+      [
+        { habitId: "habit-1", date: "2026-09-02", eventType: "COMPLETION" },
+        { habitId: "habit-2", date: "2026-09-01", eventType: "RELAPSE" },
+      ]
+    );
+    const service = new HabitsService(database as never, () => "2026-09-09");
+
+    const result = await service.history("user-1", { month: "2026-09" });
+
+    expect(database.select).toHaveBeenCalledTimes(3);
+    expect(result.habits[0]).toMatchObject({
+      type: "BUILD",
+      streak: 0,
+      successfulDays: 1,
+    });
+    expect(
+      result.habits[0]?.days.find(({ date }) => date === "2026-09-01")
+    ).toMatchObject({
+      state: "NOT_APPLICABLE",
+      editable: false,
+    });
+    expect(
+      result.habits[0]?.days.find(({ date }) => date === "2026-09-02")
+    ).toMatchObject({
+      state: "COMPLETED",
+      editable: true,
+    });
+    expect(
+      result.habits[0]?.days.find(({ date }) => date === "2026-09-07")
+    ).toMatchObject({
+      state: "MISSED",
+      editable: true,
+    });
+    expect(result.habits[1]).toMatchObject({
+      type: "BREAK",
+      streak: 8,
+      successfulDays: 8,
+      weekly: { type: "BREAK", clean: 3, relapse: 0 },
+    });
+  });
 });
 
 function habitRecord(overrides: Record<string, unknown> = {}) {
@@ -258,5 +310,27 @@ function trackingDatabase(
       values: vi.fn(() => ({ onDuplicateKeyUpdate })),
     })),
     delete: vi.fn(() => ({ where: deleteWhere })),
+  };
+}
+
+function historyDatabase(
+  records: unknown[],
+  schedules: unknown[],
+  logs: unknown[]
+) {
+  let selectCount = 0;
+  return {
+    select: vi.fn(() => {
+      selectCount += 1;
+      const rows =
+        selectCount === 1 ? records : selectCount === 2 ? schedules : logs;
+      const orderBy = vi.fn().mockResolvedValue(rows);
+      return {
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({ orderBy })),
+          innerJoin: vi.fn(() => ({ where: vi.fn(() => ({ orderBy })) })),
+        })),
+      };
+    }),
   };
 }
