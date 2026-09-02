@@ -45,6 +45,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { authMutations, authQueries } from "@/modules/auth/auth.options";
 
 import { HabitForm } from "./habit-form";
+import { currentMonth, HabitHistoryPanel } from "./habit-history";
 import type { TodayHabit } from "./habits.api";
 import { habitMutations, habitQueries } from "./habits.options";
 
@@ -74,6 +75,17 @@ export function TodayPage() {
           <Button render={<Link to="/habits/new" />}>
             <PlusIcon data-icon="inline-start" />
             New habit
+          </Button>
+          <Button
+            variant="outline"
+            render={
+              <Link
+                to="/progress"
+                search={{ month: currentMonth(), type: "ALL" }}
+              />
+            }
+          >
+            Progress
           </Button>
         </div>
       }
@@ -290,6 +302,15 @@ export function HabitDetailPage({ habitId }: { habitId: string }) {
           </CardContent>
         )}
       </Card>
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-lg font-medium">History</h2>
+          <p className="text-muted-foreground text-sm">
+            Review and correct this habit’s calendar record.
+          </p>
+        </div>
+        <HabitHistoryPanel habitId={habitId} />
+      </section>
       <AlertDialog>
         <AlertDialogTrigger render={<Button variant="destructive" />}>
           <TrashIcon data-icon="inline-start" />
