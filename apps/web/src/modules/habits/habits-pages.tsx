@@ -44,6 +44,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { authMutations, authQueries } from "@/modules/auth/auth.options";
 
+import { GoalManager } from "./goal-manager";
 import { HabitForm } from "./habit-form";
 import { currentMonth, HabitHistoryPanel } from "./habit-history";
 import type { TodayHabit } from "./habits.api";
@@ -302,6 +303,7 @@ export function HabitDetailPage({ habitId }: { habitId: string }) {
           </CardContent>
         )}
       </Card>
+      <GoalManager habitId={habitId} />
       <section className="flex flex-col gap-3">
         <div>
           <h2 className="text-lg font-medium">History</h2>

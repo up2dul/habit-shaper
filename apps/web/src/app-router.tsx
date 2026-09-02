@@ -9,6 +9,7 @@ import {
 
 import { AuthForm } from "@/modules/auth/auth-form";
 import { authQueries } from "@/modules/auth/auth.options";
+import { goalQueries } from "@/modules/habits/goals.options";
 import {
   currentMonth,
   ProgressPage,
@@ -89,7 +90,10 @@ const habitDetailRoute = createRoute({
   path: "/habits/$habitId",
   beforeLoad: requireAuthentication,
   loader: ({ context, params }) =>
-    context.queryClient.query(habitQueries.detail(params.habitId)),
+    Promise.all([
+      context.queryClient.query(habitQueries.detail(params.habitId)),
+      context.queryClient.query(goalQueries.list(params.habitId)),
+    ]),
   component: () => {
     const { habitId } = habitDetailRoute.useParams();
     return <HabitDetailPage habitId={habitId} />;
