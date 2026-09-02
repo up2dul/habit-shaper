@@ -11,7 +11,11 @@ import { AppError, ERROR_CODES } from "../../lib/errors.js";
 import { createId } from "../../lib/id.js";
 import {
   calculateBreakStreak,
+  calculateBreakWeeklySummary,
   calculateBuildStreak,
+  calculateBuildWeeklySummary,
+  calculateGoalSuccessfulDays,
+  isHistoryDateEditable,
   isBuildScheduledOn,
   resolveBreakDayState,
   resolveBuildDayState,
@@ -21,6 +25,7 @@ import {
 } from "./habit-calculations.js";
 import type {
   CreateHabitInput,
+  HabitHistoryQuery,
   UpdateHabitInput,
   Weekday,
 } from "./habits.schema.js";
@@ -45,9 +50,41 @@ export type TodayHabit = Pick<
   scheduleDays: Weekday[];
 };
 
+export type HistoryHabit = Pick<Habit, "id" | "name" | "type" | "startDate"> & {
+  streak: number;
+  successfulDays: number;
+  weekly:
+    | {
+        type: "BUILD";
+        completed: number;
+        missed: number;
+        pending: number;
+        completionRate: number | null;
+      }
+    | { type: "BREAK"; clean: number; relapse: number };
+  days: Array<{
+    date: string;
+    state:
+      | "COMPLETED"
+      | "MISSED"
+      | "PENDING"
+      | "CLEAN"
+      | "RELAPSE"
+      | "NOT_APPLICABLE";
+    editable: boolean;
+  }>;
+};
+
+export type HabitHistory = {
+  month: string;
+  today: string;
+  habits: HistoryHabit[];
+};
+
 export interface HabitsServiceContract {
   list(userId: string): Promise<Habit[]>;
   listToday(userId: string): Promise<TodayHabit[]>;
+  history(userId: string, query: HabitHistoryQuery): Promise<HabitHistory>;
   create(userId: string, input: CreateHabitInput): Promise<Habit>;
   get(userId: string, habitId: string): Promise<Habit>;
   update(
@@ -190,6 +227,140 @@ export class HabitsService implements HabitsServiceContract {
         },
       ];
     });
+  }
+
+  async history(
+    userId: string,
+    query: HabitHistoryQuery
+  ): Promise<HabitHistory> {
+    const today = this.today();
+    const monthStart = `${query.month}-01`;
+    const monthEnd = endOfMonth(monthStart);
+    const records = await this.database
+      .select()
+      .from(habits)
+      .where(
+        and(
+          eq(habits.userId, userId),
+          ...(query.habitId ? [eq(habits.id, query.habitId)] : [])
+        )
+      )
+      .orderBy(asc(habits.createdAt));
+    if (query.habitId && records.length === 0) notFound();
+    if (records.length === 0) return { month: query.month, today, habits: [] };
+
+    const habitIds = records.map(({ id }) => id);
+    const [scheduleRows, logRows] = await Promise.all([
+      this.database
+        .select({
+          habitId: habitSchedules.habitId,
+          effectiveFrom: habitSchedules.effectiveFrom,
+          dayOfWeek: habitScheduleDays.dayOfWeek,
+        })
+        .from(habitSchedules)
+        .innerJoin(
+          habitScheduleDays,
+          eq(habitScheduleDays.scheduleId, habitSchedules.id)
+        )
+        .where(
+          and(
+            inArray(habitSchedules.habitId, habitIds),
+            lte(habitSchedules.effectiveFrom, maxDate(today, monthEnd))
+          )
+        )
+        .orderBy(
+          asc(habitSchedules.effectiveFrom),
+          asc(habitScheduleDays.dayOfWeek)
+        ),
+      this.database
+        .select({
+          habitId: habitLogs.habitId,
+          date: habitLogs.date,
+          eventType: habitLogs.eventType,
+        })
+        .from(habitLogs)
+        .where(
+          and(inArray(habitLogs.habitId, habitIds), lte(habitLogs.date, today))
+        )
+        .orderBy(asc(habitLogs.date)),
+    ]);
+    const dates = monthDates(monthStart, monthEnd);
+    const weekStart = startOfWeek(today);
+
+    return {
+      month: query.month,
+      today,
+      habits: records.map((record): HistoryHabit => {
+        const schedules = scheduleVersionsFor(record.id, scheduleRows);
+        const logs = logRows.filter(({ habitId }) => habitId === record.id);
+        if (record.type === "BUILD") {
+          const completionDates = logs
+            .filter(({ eventType }) => eventType === "COMPLETION")
+            .map(({ date }) => date);
+          const facts = {
+            startDate: record.startDate,
+            scheduleVersions: schedules,
+            completionDates,
+            today,
+          };
+          return {
+            id: record.id,
+            name: record.name,
+            type: "BUILD",
+            startDate: record.startDate,
+            streak: calculateBuildStreak(facts),
+            successfulDays: calculateGoalSuccessfulDays({
+              type: "BUILD",
+              ...facts,
+            }),
+            weekly: {
+              type: "BUILD",
+              ...calculateBuildWeeklySummary(facts, weekStart),
+            },
+            days: dates.map((date) => ({
+              date,
+              state: resolveBuildDayState(facts, date),
+              editable: isHistoryDateEditable(
+                {
+                  type: "BUILD",
+                  startDate: record.startDate,
+                  scheduleVersions: schedules,
+                  today,
+                },
+                date
+              ),
+            })),
+          };
+        }
+        const relapseDates = logs
+          .filter(({ eventType }) => eventType === "RELAPSE")
+          .map(({ date }) => date);
+        const facts = { startDate: record.startDate, relapseDates, today };
+        return {
+          id: record.id,
+          name: record.name,
+          type: "BREAK",
+          startDate: record.startDate,
+          streak: calculateBreakStreak(facts),
+          successfulDays: calculateGoalSuccessfulDays({
+            type: "BREAK",
+            ...facts,
+          }),
+          weekly: {
+            type: "BREAK",
+            ...calculateBreakWeeklySummary(facts, weekStart),
+          },
+          days: dates.map((date) => ({
+            date,
+            state: resolveBreakDayState(facts, date),
+            editable: isHistoryDateEditable(
+              { type: "BREAK", startDate: record.startDate, today },
+              date
+            ),
+          })),
+        };
+      }),
+    };
   }
 
   async create(userId: string, input: CreateHabitInput): Promise<Habit> {
@@ -499,6 +670,31 @@ function utcToday(): string {
 
 function maxDate(left: string, right: string): string {
   return left > right ? left : right;
+}
+
+function endOfMonth(monthStart: string): string {
+  const date = new Date(`${monthStart}T00:00:00.000Z`);
+  date.setUTCMonth(date.getUTCMonth() + 1);
+  date.setUTCDate(0);
+  return date.toISOString().slice(0, 10);
+}
+
+function monthDates(start: string, end: string): string[] {
+  const dates: string[] = [];
+  for (let date = start; date <= end; date = shiftDate(date, 1))
+    dates.push(date);
+  return dates;
+}
+
+function startOfWeek(date: string): string {
+  const weekday = new Date(`${date}T00:00:00.000Z`).getUTCDay();
+  return shiftDate(date, weekday === 0 ? -6 : 1 - weekday);
+}
+
+function shiftDate(date: string, days: number): string {
+  const value = new Date(`${date}T00:00:00.000Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
 }
 
 function notFound(): never {

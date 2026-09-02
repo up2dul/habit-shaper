@@ -10,6 +10,11 @@ import {
 import { AuthForm } from "@/modules/auth/auth-form";
 import { authQueries } from "@/modules/auth/auth.options";
 import {
+  currentMonth,
+  ProgressPage,
+  type ProgressSearch,
+} from "@/modules/habits/habit-history";
+import {
   CreateHabitPage,
   EditHabitPage,
   HabitDetailPage,
@@ -48,8 +53,28 @@ const indexRoute = createRoute({
       throw redirect({ to: "/login" });
     }
   },
-  loader: ({ context }) => context.queryClient.query(habitQueries.list()),
+  loader: ({ context }) => context.queryClient.query(habitQueries.today()),
   component: TodayPage,
+});
+
+const progressRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/progress",
+  beforeLoad: requireAuthentication,
+  validateSearch: (search: Record<string, unknown>): ProgressSearch => ({
+    month:
+      typeof search.month === "string" &&
+      /^\d{4}-(0[1-9]|1[0-2])$/.test(search.month)
+        ? search.month
+        : currentMonth(),
+    type:
+      search.type === "BUILD" || search.type === "BREAK" ? search.type : "ALL",
+    ...(typeof search.habitId === "string" ? { habitId: search.habitId } : {}),
+  }),
+  loaderDeps: ({ search }) => ({ month: search.month }),
+  loader: ({ context, deps }) =>
+    context.queryClient.query(habitQueries.history(deps.month)),
+  component: () => <ProgressPage search={progressRoute.useSearch()} />,
 });
 
 const createHabitRoute = createRoute({
@@ -91,6 +116,7 @@ async function requireAuthentication({ context }: { context: RouterContext }) {
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  progressRoute,
   createHabitRoute,
   habitDetailRoute,
   editHabitRoute,

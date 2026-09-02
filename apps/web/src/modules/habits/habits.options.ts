@@ -8,6 +8,7 @@ import {
   createHabit,
   deleteHabit,
   getHabit,
+  getHabitHistory,
   listHabits,
   listTodayHabits,
   markCompletion,
@@ -24,6 +25,9 @@ export const habitKeys = {
   today: () => [...habitKeys.all, "today"] as const,
   details: () => [...habitKeys.all, "detail"] as const,
   detail: (habitId: string) => [...habitKeys.details(), habitId] as const,
+  histories: () => [...habitKeys.all, "history"] as const,
+  history: (month: string, habitId?: string) =>
+    [...habitKeys.histories(), month, habitId ?? "all"] as const,
 };
 
 export const habitQueries = {
@@ -34,6 +38,12 @@ export const habitQueries = {
     queryOptions({
       queryKey: habitKeys.detail(habitId),
       queryFn: () => getHabit(habitId),
+    }),
+  history: (month: string, habitId?: string) =>
+    queryOptions({
+      queryKey: habitKeys.history(month, habitId),
+      queryFn: () =>
+        getHabitHistory({ month, ...(habitId ? { habitId } : {}) }),
     }),
 };
 
@@ -79,7 +89,10 @@ function trackingMutation(
   return mutationOptions({
     mutationFn,
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: habitKeys.today() }),
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: habitKeys.today() }),
+        queryClient.invalidateQueries({ queryKey: habitKeys.histories() }),
+      ]),
   });
 }
 
@@ -87,5 +100,6 @@ function invalidateHabitCollections(queryClient: QueryClient) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: habitKeys.lists() }),
     queryClient.invalidateQueries({ queryKey: habitKeys.today() }),
+    queryClient.invalidateQueries({ queryKey: habitKeys.histories() }),
   ]);
 }

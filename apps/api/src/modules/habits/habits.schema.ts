@@ -37,6 +37,13 @@ export const habitLogParamsSchema = habitIdSchema.extend({
   date: z.iso.date(),
 });
 
+export const habitHistoryQuerySchema = z.strictObject({
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
+  habitId: z.uuid().optional(),
+});
+
+export type HabitHistoryQuery = z.output<typeof habitHistoryQuerySchema>;
+
 export type CreateHabitInput = z.output<typeof createHabitSchema>;
 export type UpdateHabitInput = z.output<typeof updateHabitSchema>;
 export type Weekday = z.output<typeof weekdaySchema>;

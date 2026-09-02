@@ -39,6 +39,45 @@ export async function listTodayHabits(): Promise<TodayHabit[]> {
 }
 
 export type TrackingMutation = { habitId: string; date: string };
+export type HistoryDay = {
+  date: string;
+  state:
+    | "COMPLETED"
+    | "MISSED"
+    | "PENDING"
+    | "CLEAN"
+    | "RELAPSE"
+    | "NOT_APPLICABLE";
+  editable: boolean;
+};
+export type HistoryHabit = Pick<Habit, "id" | "name" | "type" | "startDate"> & {
+  streak: number;
+  successfulDays: number;
+  weekly:
+    | {
+        type: "BUILD";
+        completed: number;
+        missed: number;
+        pending: number;
+        completionRate: number | null;
+      }
+    | { type: "BREAK"; clean: number; relapse: number };
+  days: HistoryDay[];
+};
+export type HabitHistory = {
+  month: string;
+  today: string;
+  habits: HistoryHabit[];
+};
+
+export async function getHabitHistory(input: {
+  month: string;
+  habitId?: string;
+}): Promise<HabitHistory> {
+  return readResponse<HabitHistory>(
+    await api.habits.history.$get({ query: input })
+  );
+}
 
 export async function markCompletion(input: TrackingMutation): Promise<void> {
   const response = await api.habits[":habitId"].completions[":date"].$put({
