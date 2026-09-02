@@ -112,7 +112,7 @@ apps/web/src/
 │   ├── router/
 │   ├── providers/
 │   └── styles/
-├── domains/
+├── modules/
 │   ├── auth/
 │   ├── habits/
 │   └── tracking/

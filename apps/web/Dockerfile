@@ -12,12 +12,13 @@ COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
+COPY apps/api apps/api
 COPY apps/web apps/web
 
 ARG VITE_API_URL=http://localhost:3000
 ENV VITE_API_URL=$VITE_API_URL
 
-RUN pnpm --filter web build
+RUN pnpm --filter @habit-shaper/api build && pnpm --filter web build
 
 FROM nginx:1.29-alpine AS runtime
 

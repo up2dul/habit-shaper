@@ -1,8 +1,13 @@
 {
-  "name": "api",
+  "name": "@habit-shaper/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/app.d.ts"
+    }
+  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
@@ -13,6 +18,8 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
+    "@hono/zod-validator": "^0.9.1",
+    "argon2": "^0.45.1",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.5",
     "mysql2": "^3.24.3",
