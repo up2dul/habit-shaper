@@ -53,6 +53,7 @@ describe("database schema", () => {
   });
 
   it("constrains weekdays and positive goal targets", () => {
+    expect(checkNames(users)).toContain("users_name_trimmed_nonempty_check");
     expect(checkNames(habitScheduleDays)).toContain(
       "habit_schedule_days_day_of_week_check"
     );
