@@ -15,6 +15,7 @@
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "lint": "oxlint --type-aware .",
+    "typecheck": "pnpm --recursive typecheck",
     "prepare": "lefthook install"
   },
   "devDependencies": {
