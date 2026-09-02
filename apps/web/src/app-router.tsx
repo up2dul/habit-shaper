@@ -1,9 +1,4 @@
-import {
-  QueryClient,
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
   createRoute,
@@ -12,9 +7,15 @@ import {
   redirect,
 } from "@tanstack/react-router";
 
-import { Button } from "@/components/ui/button";
 import { AuthForm } from "@/modules/auth/auth-form";
-import { authMutations, authQueries } from "@/modules/auth/auth.options";
+import { authQueries } from "@/modules/auth/auth.options";
+import {
+  CreateHabitPage,
+  EditHabitPage,
+  HabitDetailPage,
+  TodayPage,
+} from "@/modules/habits/habits-pages";
+import { habitQueries } from "@/modules/habits/habits.options";
 
 type RouterContext = { queryClient: QueryClient };
 const rootRoute = createRootRouteWithContext<RouterContext>()({
@@ -47,43 +48,52 @@ const indexRoute = createRoute({
       throw redirect({ to: "/login" });
     }
   },
-  component: HomePage,
+  loader: ({ context }) => context.queryClient.query(habitQueries.list()),
+  component: TodayPage,
 });
 
-function HomePage() {
-  const { data: user } = useSuspenseQuery(authQueries.currentUser());
-  const client = useQueryClient();
-  const mutation = useMutation(authMutations.logout(client));
-  return (
-    <main className="mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-6">
-      <header className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-medium">Today</h1>
-          <p className="text-muted-foreground">Hello, {user?.name}.</p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={async () => {
-            await mutation.mutateAsync();
-            await router.navigate({ to: "/login" });
-          }}
-          disabled={mutation.isPending}
-        >
-          Sign out
-        </Button>
-      </header>
-      <section className="bg-card rounded-xl border p-6">
-        <h2 className="text-lg font-medium">Your habits will live here</h2>
-        <p className="text-muted-foreground">
-          Authentication is ready. Habit creation arrives in Phase 4.
-        </p>
-      </section>
-    </main>
-  );
+const createHabitRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/habits/new",
+  beforeLoad: requireAuthentication,
+  component: CreateHabitPage,
+});
+
+const habitDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/habits/$habitId",
+  beforeLoad: requireAuthentication,
+  loader: ({ context, params }) =>
+    context.queryClient.query(habitQueries.detail(params.habitId)),
+  component: () => {
+    const { habitId } = habitDetailRoute.useParams();
+    return <HabitDetailPage habitId={habitId} />;
+  },
+});
+
+const editHabitRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/habits/$habitId/edit",
+  beforeLoad: requireAuthentication,
+  loader: ({ context, params }) =>
+    context.queryClient.query(habitQueries.detail(params.habitId)),
+  component: () => {
+    const { habitId } = editHabitRoute.useParams();
+    return <EditHabitPage habitId={habitId} />;
+  },
+});
+
+async function requireAuthentication({ context }: { context: RouterContext }) {
+  if (!(await context.queryClient.query(authQueries.currentUser()))) {
+    throw redirect({ to: "/login" });
+  }
 }
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  createHabitRoute,
+  habitDetailRoute,
+  editHabitRoute,
   loginRoute,
   registerRoute,
 ]);

@@ -1,0 +1,55 @@
+import { api, readResponse } from "@/lib/api";
+
+export type HabitType = "BUILD" | "BREAK";
+export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export type Habit = {
+  id: string;
+  name: string;
+  description: string | null;
+  type: HabitType;
+  startDate: string;
+  scheduleDays: Weekday[];
+  createdAt: string;
+  updatedAt: string;
+};
+export type CreateHabitInput = {
+  name: string;
+  description?: string | null;
+  startDate: string;
+} & ({ type: "BUILD"; scheduleDays: Weekday[] } | { type: "BREAK" });
+export type UpdateHabitInput = Partial<
+  Pick<CreateHabitInput, "name" | "description" | "startDate"> & {
+    scheduleDays: Weekday[];
+  }
+>;
+
+export async function listHabits(): Promise<Habit[]> {
+  return readResponse<Habit[]>(await api.habits.$get());
+}
+
+export async function getHabit(habitId: string): Promise<Habit> {
+  return readResponse<Habit>(
+    await api.habits[":habitId"].$get({ param: { habitId } })
+  );
+}
+
+export async function createHabit(input: CreateHabitInput): Promise<Habit> {
+  return readResponse<Habit>(await api.habits.$post({ json: input }));
+}
+
+export async function updateHabit({
+  habitId,
+  input,
+}: {
+  habitId: string;
+  input: UpdateHabitInput;
+}): Promise<Habit> {
+  return readResponse<Habit>(
+    await api.habits[":habitId"].$patch({ param: { habitId }, json: input })
+  );
+}
+
+export async function deleteHabit(habitId: string): Promise<void> {
+  const response = await api.habits[":habitId"].$delete({ param: { habitId } });
+  if (!response.ok) await readResponse(response);
+}
