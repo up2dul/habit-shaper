@@ -7,6 +7,7 @@ import {
   redirect,
 } from "@tanstack/react-router";
 
+import { RouteError, RoutePending } from "@/components/route-feedback";
 import { AuthForm } from "@/modules/auth/auth-form";
 import { authQueries } from "@/modules/auth/auth.options";
 import { goalQueries } from "@/modules/habits/goals.options";
@@ -25,7 +26,17 @@ import { habitQueries } from "@/modules/habits/habits.options";
 
 type RouterContext = { queryClient: QueryClient };
 const rootRoute = createRootRouteWithContext<RouterContext>()({
-  component: () => <Outlet />,
+  component: () => (
+    <>
+      <a
+        href="#main-content"
+        className="bg-primary text-primary-foreground focus-visible:ring-ring fixed top-3 left-3 z-50 -translate-y-20 rounded-lg px-4 py-3 font-medium transition-transform focus-visible:translate-y-0 focus-visible:ring-3"
+      >
+        Skip to main content
+      </a>
+      <Outlet />
+    </>
+  ),
 });
 
 async function redirectAuthenticated({ context }: { context: RouterContext }) {
@@ -130,7 +141,13 @@ const routeTree = rootRoute.addChildren([
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
-export const router = createRouter({ routeTree, context: { queryClient } });
+export const router = createRouter({
+  routeTree,
+  context: { queryClient },
+  defaultPendingComponent: RoutePending,
+  defaultErrorComponent: RouteError,
+  defaultPendingMs: 150,
+});
 
 declare module "@tanstack/react-router" {
   interface Register {
