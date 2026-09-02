@@ -51,7 +51,7 @@ describe("API environment", () => {
   });
 
   it("requires explicit production configuration", () => {
-    expect(() => parseApiEnv({ NODE_ENV: "production" })).toThrowError(
+    expect(() => parseApiEnv({ NODE_ENV: "production" })).toThrow(
       /DATABASE_HOST[\s\S]*DATABASE_PORT[\s\S]*DATABASE_USER[\s\S]*DATABASE_PASSWORD[\s\S]*DATABASE_NAME[\s\S]*PORT[\s\S]*WEB_ORIGIN/
     );
   });
@@ -72,7 +72,7 @@ describe("API environment", () => {
   });
 
   it("applies the same production rules to Drizzle", () => {
-    expect(() => parseDatabaseEnv({ NODE_ENV: "production" })).toThrowError(
+    expect(() => parseDatabaseEnv({ NODE_ENV: "production" })).toThrow(
       /DATABASE_PASSWORD/
     );
   });

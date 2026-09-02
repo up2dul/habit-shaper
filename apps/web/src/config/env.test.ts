@@ -10,7 +10,7 @@ describe("web environment", () => {
   });
 
   it("requires an explicit production API URL", () => {
-    expect(() => parseWebEnv({}, "production")).toThrowError(
+    expect(() => parseWebEnv({}, "production")).toThrow(
       /VITE_API_URL: is required in production/
     );
   });
@@ -18,7 +18,7 @@ describe("web environment", () => {
   it("rejects non-HTTP URLs", () => {
     expect(() =>
       parseWebEnv({ VITE_API_URL: "ftp://example.com" }, "development")
-    ).toThrowError(/must use the http or https protocol/);
+    ).toThrow(/must use the http or https protocol/);
   });
 
   it("accepts a valid production API URL", () => {
