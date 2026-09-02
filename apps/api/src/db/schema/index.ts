@@ -15,7 +15,7 @@ import {
 export const users = mysqlTable(
   "users",
   {
-    id: int().autoincrement().primaryKey(),
+    id: varchar({ length: 36 }).primaryKey(),
     email: varchar({ length: 320 }).notNull(),
     passwordHash: varchar("password_hash", { length: 255 }).notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -28,7 +28,7 @@ export const sessions = mysqlTable(
   "sessions",
   {
     id: varchar({ length: 128 }).primaryKey(),
-    userId: int("user_id")
+    userId: varchar("user_id", { length: 36 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     expiresAt: timestamp("expires_at").notNull(),
@@ -43,8 +43,8 @@ export const sessions = mysqlTable(
 export const habits = mysqlTable(
   "habits",
   {
-    id: int().autoincrement().primaryKey(),
-    userId: int("user_id")
+    id: varchar({ length: 36 }).primaryKey(),
+    userId: varchar("user_id", { length: 36 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     name: varchar({ length: 255 }).notNull(),
@@ -59,8 +59,8 @@ export const habits = mysqlTable(
 export const habitSchedules = mysqlTable(
   "habit_schedules",
   {
-    id: int().autoincrement().primaryKey(),
-    habitId: int("habit_id")
+    id: varchar({ length: 36 }).primaryKey(),
+    habitId: varchar("habit_id", { length: 36 })
       .notNull()
       .references(() => habits.id, { onDelete: "cascade" }),
     effectiveFrom: date("effective_from", { mode: "string" }).notNull(),
@@ -77,7 +77,7 @@ export const habitSchedules = mysqlTable(
 export const habitScheduleDays = mysqlTable(
   "habit_schedule_days",
   {
-    scheduleId: int("schedule_id")
+    scheduleId: varchar("schedule_id", { length: 36 })
       .notNull()
       .references(() => habitSchedules.id, { onDelete: "cascade" }),
     dayOfWeek: int("day_of_week").notNull(),
@@ -94,8 +94,8 @@ export const habitScheduleDays = mysqlTable(
 export const habitLogs = mysqlTable(
   "habit_logs",
   {
-    id: int().autoincrement().primaryKey(),
-    habitId: int("habit_id")
+    id: varchar({ length: 36 }).primaryKey(),
+    habitId: varchar("habit_id", { length: 36 })
       .notNull()
       .references(() => habits.id, { onDelete: "cascade" }),
     date: date({ mode: "string" }).notNull(),
@@ -110,8 +110,8 @@ export const habitLogs = mysqlTable(
 export const goals = mysqlTable(
   "goals",
   {
-    id: int().autoincrement().primaryKey(),
-    habitId: int("habit_id")
+    id: varchar({ length: 36 }).primaryKey(),
+    habitId: varchar("habit_id", { length: 36 })
       .notNull()
       .references(() => habits.id, { onDelete: "cascade" }),
     targetSuccessfulDays: int("target_successful_days").notNull(),
