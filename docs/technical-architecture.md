@@ -264,6 +264,7 @@ Conceptual fields:
 ```text
 users
 - id
+- name               required display name
 - email              UNIQUE
 - password_hash
 - created_at
@@ -271,6 +272,11 @@ users
 ```
 
 Passwords are never stored or reversibly encrypted. Use Argon2id for password hashing.
+
+`name` is a required user-chosen display name, not a legal-name field. Trim leading
+and trailing whitespace before storage, require 1–100 Unicode characters, and reject
+control characters and line breaks at the API boundary. Names are neither unique nor
+indexed.
 
 ### 9.2 Sessions
 
@@ -410,6 +416,13 @@ Do not derive the user's intended habit day carelessly from the VM's local time 
 No user-timezone preference field is required for the current lightweight scope.
 
 ## 12. Authentication and session lifecycle
+
+### Registration and current user
+
+Registration accepts required `name`, `email`, and `password` fields. Registration
+and `GET /auth/me` expose only the safe user shape: `id`, `name`, and `email`.
+Password hashes and session records are never serialized to the client. Editing a
+display name remains out of scope until profile management is explicitly required.
 
 ### Login
 

@@ -1,7 +1,7 @@
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+import { webEnv } from "@/config/env";
 
 export async function getApiHealth(): Promise<void> {
-  const response = await fetch(`${apiUrl}/health`, {
+  const response = await fetch(`${webEnv.apiUrl}/health`, {
     credentials: "include",
   });
 

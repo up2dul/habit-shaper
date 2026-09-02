@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1788339623404,
+      "tag": "0000_fantastic_lorna_dane",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1788341808774,
+      "tag": "0001_medical_jazinda",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1788343692263,
+      "tag": "0002_wild_marvex",
+      "breakpoints": true
+    }
+  ]
+}

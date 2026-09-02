@@ -20,17 +20,36 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
 
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ["node", "apps/api/dist/db/migrate.js"]
+    environment:
+      DATABASE_NAME: ${MYSQL_DATABASE:-habit_shaper}
+      DATABASE_HOST: mysql
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD:-habit_shaper}
+      DATABASE_PORT: 3306
+      DATABASE_USER: ${MYSQL_USER:-habit_shaper}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: "no"
+
   api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
     environment:
+      DATABASE_NAME: ${MYSQL_DATABASE:-habit_shaper}
       DATABASE_HOST: mysql
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD:-habit_shaper}
       DATABASE_PORT: 3306
+      DATABASE_USER: ${MYSQL_USER:-habit_shaper}
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:5173}
     depends_on:
-      mysql:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test:
         [

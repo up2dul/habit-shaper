@@ -6,15 +6,22 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/db/migrate.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
-    "hono": "^4.13.5"
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.13.5",
+    "mysql2": "^3.24.3",
+    "uuid": "^14.0.2",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
+    "drizzle-kit": "^0.31.10",
     "tsx": "^4.23.0",
     "typescript": "^7.0.2"
   }

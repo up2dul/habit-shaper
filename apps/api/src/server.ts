@@ -1,13 +1,12 @@
 import { serve } from "@hono/node-server";
 
 import { app } from "./app.js";
-
-const port = Number(process.env.PORT ?? "3000");
+import { env } from "./config/env.js";
 
 serve(
   {
     fetch: app.fetch,
-    port,
+    port: env.port,
   },
   (info) => {
     console.log(`Habit Shaper API listening on port ${info.port}`);
