@@ -92,6 +92,7 @@ function trackingMutation(
       Promise.all([
         queryClient.invalidateQueries({ queryKey: habitKeys.today() }),
         queryClient.invalidateQueries({ queryKey: habitKeys.histories() }),
+        queryClient.invalidateQueries({ queryKey: ["goals"] }),
       ]),
   });
 }
@@ -101,5 +102,6 @@ function invalidateHabitCollections(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: habitKeys.lists() }),
     queryClient.invalidateQueries({ queryKey: habitKeys.today() }),
     queryClient.invalidateQueries({ queryKey: habitKeys.histories() }),
+    queryClient.invalidateQueries({ queryKey: ["goals"] }),
   ]);
 }
