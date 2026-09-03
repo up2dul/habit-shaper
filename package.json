@@ -11,6 +11,7 @@
     "build:web": "pnpm --filter web build",
     "dev:api": "pnpm --filter api dev",
     "build:api": "pnpm --filter api build",
+    "db:seed": "pnpm --filter api db:seed",
     "test": "vitest",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
