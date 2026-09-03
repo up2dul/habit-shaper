@@ -18,6 +18,6 @@ Each ADR captures context, the decision, alternatives considered, and consequenc
 - [ADR-0010 — Enforce security at the server and database boundaries](0010-authz-csrf-security.md)
 - [ADR-0011 — Use database constraints, transactions, cascades, indexes, and batch queries](0011-database-integrity-query-strategy.md)
 - [ADR-0012 — Run checked-in migrations automatically; keep seeding optional](0012-migrations-and-seeding.md)
-- [ADR-0013 — Support separate-origin local development and same-origin VM deployment](0013-local-and-production-topology.md)
+- [ADR-0013 — Support separate-origin local development and same-origin Compose](0013-local-and-production-topology.md)
 - [ADR-0014 — Use TanStack Query/Form and avoid a global state store](0014-frontend-state-management.md)
 - [ADR-0015 — Keep testing and observability lightweight but targeted](0015-testing-observability.md)

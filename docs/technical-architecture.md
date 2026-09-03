@@ -604,10 +604,10 @@ Seed data is optional and explicit:
 pnpm db:seed
 ```
 
-or against a running Compose stack:
+or through Docker without a local Node.js toolchain:
 
 ```bash
-docker compose exec api pnpm db:seed
+docker compose run --rm seed
 ```
 
 Seed scripts should be idempotent where practical. A development-only `db:reset` convenience script may reset, migrate, and seed, but it is not part of the required reviewer path.
@@ -619,7 +619,8 @@ The repository root contains `docker-compose.yaml` and `.env.example`.
 Base services:
 
 ```text
-db
+mysql
+migrate
 api
 web
 ```

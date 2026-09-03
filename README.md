@@ -46,16 +46,26 @@ uses the API at <http://localhost:3000> and requires a running MySQL instance.
 The primary reviewer path requires only Docker and Docker Compose.
 
 ```bash
-cp .env.example .env
 docker compose up --build -d
 ```
 
 Open <http://localhost:5173>. Migrations run automatically before the API
-starts. To stop the detached stack, run:
+starts. The Compose defaults require no `.env` file; copy `.env.example` only
+when you want to customize them. To stop the detached stack, run:
 
 ```bash
 docker compose down
 ```
+
+Optionally load a reproducible demo account after the stack starts:
+
+```bash
+docker compose run --rm seed
+```
+
+Sign in with `demo@example.com` and password `demo12345`. Rerunning the command
+restores that demo account and its rolling 14-day history without changing any
+other users.
 
 To reset local data, including the MySQL volume, run:
 
@@ -63,18 +73,11 @@ To reset local data, including the MySQL volume, run:
 docker compose down -v
 ```
 
-The normal Compose file binds MySQL to `127.0.0.1:3306` (or `MYSQL_PORT`), so
-it is available for local debugging but not on external network interfaces. The
-API port is also exposed for local debugging. Production Compose removes the
-public API port; use it with an external HTTPS reverse proxy:
-
-```bash
-docker compose -f docker-compose.yaml -f docker-compose.production.yaml up --build -d
-```
-
-The production proxy should route `/` to the web container and `/api/*` to the
-API container. Set `WEB_ORIGIN` to the public HTTPS origin. MySQL remains
-private to the Compose network.
+The Compose file binds MySQL to `127.0.0.1:3306` (or `MYSQL_PORT`), so it is
+available for local debugging but not on external network interfaces. The API
+port is also exposed for local debugging. Production deployment concerns such
+as HTTPS termination, secrets, backups, and monitoring are outside this
+project's current scope.
 
 ## Environment variables
 

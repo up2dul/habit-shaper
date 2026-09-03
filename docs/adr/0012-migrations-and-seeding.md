@@ -19,7 +19,10 @@ On Compose startup:
 
 Do not require a manual migration command for reviewers.
 
-Keep seed data optional and explicit via `pnpm db:seed` or `docker compose exec api pnpm db:seed`.
+Keep seed data optional and explicit. Locally, run it with `pnpm db:seed`. The
+Docker-only reviewer path uses an opt-in Compose service via
+`docker compose run --rm seed`. The seed command refuses to run when
+`NODE_ENV=production`.
 
 ## Alternatives considered
 
