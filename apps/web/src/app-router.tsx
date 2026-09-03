@@ -179,7 +179,14 @@ const routeTree = rootRoute.addChildren([
   registerRoute,
 ]);
 export const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: false } },
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      retry: false,
+    },
+  },
 });
 export const router = createRouter({
   routeTree,
