@@ -388,7 +388,7 @@ function Page({
   return (
     <main
       id="main-content"
-      className="mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 sm:p-6"
+      className={`mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 sm:p-6 ${showNavigation ? "pb-28" : ""}`}
     >
       <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex flex-col gap-1">
@@ -401,13 +401,15 @@ function Page({
               <ArrowLeftIcon /> Back
             </Button>
           )}
-          <Button
-            variant="link"
-            className="h-auto justify-start p-0"
-            render={<Link to="/" />}
-          >
-            Habit Shaper
-          </Button>
+          {!showBack && (
+            <Button
+              variant="link"
+              className="h-auto justify-start p-0"
+              render={<Link to="/" />}
+            >
+              Habit Shaper
+            </Button>
+          )}
           <h1 className="text-2xl font-medium">{title}</h1>
         </div>
         <div className="flex w-full flex-wrap gap-2 sm:w-auto">
@@ -425,9 +427,9 @@ function BottomNavigation() {
   return (
     <nav
       aria-label="Primary navigation"
-      className="mt-auto flex justify-center border-t pt-4"
+      className="bg-background/95 fixed inset-x-0 bottom-0 z-40 flex justify-center border-t px-4 py-3 shadow-[0_-4px_16px_oklch(0_0_0/0.06)] backdrop-blur sm:px-6"
     >
-      <div className="flex w-full max-w-sm gap-2">
+      <div className="flex w-full max-w-xl gap-2">
         <Button className="flex-1" variant="ghost" render={<Link to="/" />}>
           Today
         </Button>

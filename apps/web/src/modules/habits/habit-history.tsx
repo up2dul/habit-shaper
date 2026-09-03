@@ -65,7 +65,7 @@ export function ProgressPage({ search }: { search: ProgressSearch }) {
   return (
     <main
       id="main-content"
-      className="mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 sm:p-6"
+      className="mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 pb-28 sm:p-6 sm:pb-28"
     >
       <header className="flex items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
