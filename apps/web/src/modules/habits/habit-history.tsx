@@ -103,6 +103,28 @@ export function ProgressPage({ search }: { search: ProgressSearch }) {
       <Suspense fallback={<HistorySkeleton showFilter />}>
         <ProgressHistory search={search} update={update} />
       </Suspense>
+      <nav
+        aria-label="Primary navigation"
+        className="mt-auto flex justify-center border-t pt-4"
+      >
+        <div className="flex w-full max-w-sm gap-2">
+          <Button className="flex-1" variant="ghost" render={<Link to="/" />}>
+            Today
+          </Button>
+          <Button
+            className="flex-1"
+            variant="ghost"
+            render={
+              <Link
+                to="/progress"
+                search={{ month: currentMonth(), type: "ALL" }}
+              />
+            }
+          >
+            Progress
+          </Button>
+        </div>
+      </nav>
     </main>
   );
 }
@@ -253,12 +275,12 @@ function HistoryView({
             {longDate(selectedDate)}
           </h2>
           <p className="text-muted-foreground text-sm">
-            Tracking records for the selected date.
+            Habit activity for this date.
           </p>
         </div>
         {selected.length === 0 ? (
           <p className="text-muted-foreground text-sm">
-            No applicable habits on this date.
+            No habits scheduled for this date.
           </p>
         ) : (
           selected.map(({ habit, day }) => (
@@ -360,8 +382,7 @@ function HistoryCalendar({
         })}
       </div>
       <p className="text-muted-foreground text-xs">
-        ✓ completed or clean · × missed or relapse · • pending · — not
-        applicable
+        ✓ completed or clean · × missed or relapse · • pending · — not scheduled
       </p>
     </div>
   );
@@ -400,7 +421,9 @@ function HistoryRecord({
           <div>
             <CardTitle>{habit.name}</CardTitle>
             <CardDescription>
-              {habit.type === "BUILD" ? "Build habit" : "Break habit"}
+              {habit.type === "BUILD"
+                ? `${habit.streak}-day streak`
+                : `${habit.streak}-day clean streak`}
             </CardDescription>
           </div>
           <Badge variant="secondary">{stateLabel(day.state)}</Badge>
@@ -453,19 +476,17 @@ function Metrics({ habit }: { habit: HistoryHabit }) {
       <Card>
         <CardHeader>
           <CardDescription>
-            {habit.type === "BUILD" ? "Build streak" : "Clean streak"}
+            {habit.type === "BUILD" ? "Current streak" : "Clean streak"}
           </CardDescription>
           <CardTitle>{habit.streak}</CardTitle>
         </CardHeader>
       </Card>
       <Card>
         <CardHeader>
-          <CardDescription>
-            {habit.type === "BUILD" ? "This week" : "This week"}
-          </CardDescription>
+          <CardDescription>Weekly completion</CardDescription>
           <CardTitle>
             {weekly.type === "BUILD"
-              ? `${weekly.completed}/${weekly.completed + weekly.missed}`
+              ? `${weekly.completed} completed · ${weekly.missed} missed`
               : `${weekly.clean} clean`}
           </CardTitle>
         </CardHeader>

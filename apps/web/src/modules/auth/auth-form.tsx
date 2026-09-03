@@ -78,144 +78,156 @@ export function AuthForm({ mode }: { mode: Mode }) {
   return (
     <main
       id="main-content"
-      className="relative flex min-h-svh items-center justify-center p-4"
+      className="relative flex min-h-svh items-center justify-center p-4 sm:p-6"
     >
       <ThemeToggle className="absolute top-4 right-4" />
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>
-            {isRegister ? "Start shaping your days" : "Welcome back"}
-          </CardTitle>
-          <CardDescription>
-            {isRegister
-              ? "Create your account to begin a gentler routine."
-              : "Sign in to keep your momentum going."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            id={`${mode}-form`}
-            onSubmit={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              void form.handleSubmit();
-            }}
-          >
-            <FieldGroup>
-              {submitError && (
-                <Alert variant="destructive">
-                  <WarningCircleIcon />
-                  <AlertTitle>Couldn&apos;t continue</AlertTitle>
-                  <AlertDescription>{submitError}</AlertDescription>
-                </Alert>
-              )}
-              {isRegister && (
+      <div className="w-full max-w-sm">
+        <p className="font-heading mb-4 text-center text-2xl font-medium">
+          Habit Shaper
+        </p>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {isRegister ? "Start shaping your days" : "Welcome back"}
+            </CardTitle>
+            <CardDescription>
+              {isRegister
+                ? "Create your account and start building better habits."
+                : "Sign in to keep your momentum going."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              id={`${mode}-form`}
+              onSubmit={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                void form.handleSubmit();
+              }}
+            >
+              <FieldGroup>
+                {submitError && (
+                  <Alert variant="destructive">
+                    <WarningCircleIcon />
+                    <AlertTitle>Couldn&apos;t continue</AlertTitle>
+                    <AlertDescription>{submitError}</AlertDescription>
+                  </Alert>
+                )}
+                {isRegister && (
+                  <form.Field
+                    name="name"
+                    validators={{
+                      onBlur: ({ value }) =>
+                        value.trim() ? undefined : "Enter your name",
+                    }}
+                  >
+                    {(field) => (
+                      <TextField
+                        field={field}
+                        label="Your name"
+                        autoComplete="name"
+                      />
+                    )}
+                  </form.Field>
+                )}
                 <form.Field
-                  name="name"
+                  name="email"
                   validators={{
                     onBlur: ({ value }) =>
-                      value.trim() ? undefined : "Enter your name",
-                  }}
-                >
-                  {(field) => (
-                    <TextField field={field} label="Name" autoComplete="name" />
-                  )}
-                </form.Field>
-              )}
-              <form.Field
-                name="email"
-                validators={{
-                  onBlur: ({ value }) =>
-                    /^\S+@\S+\.\S+$/.test(value)
-                      ? undefined
-                      : "Enter a valid email address",
-                }}
-              >
-                {(field) => (
-                  <TextField
-                    field={field}
-                    label="Email"
-                    type="email"
-                    autoComplete="email"
-                  />
-                )}
-              </form.Field>
-              <form.Field
-                name="password"
-                validators={{
-                  onBlur: ({ value }) =>
-                    value.length >= 8 ? undefined : "Use at least 8 characters",
-                }}
-              >
-                {(field) => (
-                  <TextField
-                    field={field}
-                    label="Password"
-                    type="password"
-                    autoComplete={
-                      isRegister ? "new-password" : "current-password"
-                    }
-                  />
-                )}
-              </form.Field>
-              {isRegister && (
-                <form.Field
-                  name="confirmPassword"
-                  validators={{
-                    onChangeListenTo: ["password"],
-                    onChange: ({ value, fieldApi }) => {
-                      if (!value) return "Confirm your password";
-                      return value === fieldApi.form.getFieldValue("password")
+                      /^\S+@\S+\.\S+$/.test(value)
                         ? undefined
-                        : "Passwords do not match";
-                    },
-                    onSubmit: ({ value, fieldApi }) => {
-                      if (!value) return "Confirm your password";
-                      return value === fieldApi.form.getFieldValue("password")
-                        ? undefined
-                        : "Passwords do not match";
-                    },
+                        : "Enter a valid email address",
                   }}
                 >
                   {(field) => (
                     <TextField
                       field={field}
-                      label="Confirm password"
-                      type="password"
-                      autoComplete="new-password"
+                      label="Email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="you@example.com"
                     />
                   )}
                 </form.Field>
+                <form.Field
+                  name="password"
+                  validators={{
+                    onBlur: ({ value }) =>
+                      value.length >= 8
+                        ? undefined
+                        : "Use at least 8 characters",
+                  }}
+                >
+                  {(field) => (
+                    <TextField
+                      field={field}
+                      label="Password"
+                      type="password"
+                      autoComplete={
+                        isRegister ? "new-password" : "current-password"
+                      }
+                    />
+                  )}
+                </form.Field>
+                {isRegister && (
+                  <form.Field
+                    name="confirmPassword"
+                    validators={{
+                      onChangeListenTo: ["password"],
+                      onChange: ({ value, fieldApi }) => {
+                        if (!value) return "Confirm your password";
+                        return value === fieldApi.form.getFieldValue("password")
+                          ? undefined
+                          : "Passwords do not match";
+                      },
+                      onSubmit: ({ value, fieldApi }) => {
+                        if (!value) return "Confirm your password";
+                        return value === fieldApi.form.getFieldValue("password")
+                          ? undefined
+                          : "Passwords do not match";
+                      },
+                    }}
+                  >
+                    {(field) => (
+                      <TextField
+                        field={field}
+                        label="Confirm password"
+                        type="password"
+                        autoComplete="new-password"
+                      />
+                    )}
+                  </form.Field>
+                )}
+              </FieldGroup>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col items-stretch gap-2">
+            <form.Subscribe
+              selector={(state) => [state.canSubmit, state.isSubmitting]}
+            >
+              {([canSubmit, isSubmitting]) => (
+                <Button
+                  type="submit"
+                  form={`${mode}-form`}
+                  size="lg"
+                  disabled={!canSubmit || isSubmitting}
+                >
+                  {isSubmitting && <Spinner data-icon="inline-start" />}
+                  {isRegister ? "Create account" : "Sign in"}
+                </Button>
               )}
-            </FieldGroup>
-          </form>
-        </CardContent>
-        <CardFooter className="flex flex-col items-stretch gap-2">
-          <form.Subscribe
-            selector={(state) => [state.canSubmit, state.isSubmitting]}
-          >
-            {([canSubmit, isSubmitting]) => (
-              <Button
-                type="submit"
-                form={`${mode}-form`}
-                size="lg"
-                disabled={!canSubmit || isSubmitting}
-              >
-                {isSubmitting && <Spinner data-icon="inline-start" />}
-                {isRegister ? "Create account" : "Sign in"}
-              </Button>
-            )}
-          </form.Subscribe>
-          <Button
-            variant="link"
-            render={<Link to={isRegister ? "/login" : "/register"} />}
-          >
-            {isRegister
-              ? "Already have an account? Sign in"
-              : "New here? Create an account"}
-          </Button>
-        </CardFooter>
-      </Card>
+            </form.Subscribe>
+            <Button
+              variant="link"
+              render={<Link to={isRegister ? "/login" : "/register"} />}
+            >
+              {isRegister
+                ? "Already have an account? Sign in"
+                : "New here? Create an account"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
     </main>
   );
 }
@@ -239,11 +251,13 @@ function TextField({
   label,
   type = "text",
   autoComplete,
+  placeholder,
 }: {
   field: TextFieldApi;
   label: string;
   type?: string;
   autoComplete: string;
+  placeholder?: string;
 }) {
   const invalid = field.state.meta.isTouched && !field.state.meta.isValid;
   return (
@@ -254,6 +268,7 @@ function TextField({
         name={field.name}
         type={type}
         autoComplete={autoComplete}
+        placeholder={placeholder}
         value={field.state.value}
         onBlur={field.handleBlur}
         onChange={(event) => field.handleChange(event.target.value)}

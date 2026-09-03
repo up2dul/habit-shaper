@@ -1,5 +1,6 @@
 import {
   ArrowCounterClockwiseIcon,
+  ArrowLeftIcon,
   CheckIcon,
   PlusIcon,
   TargetIcon,
@@ -88,21 +89,12 @@ export function TodayPage() {
             <PlusIcon data-icon="inline-start" />
             New habit
           </Button>
-          <Button
-            variant="outline"
-            render={
-              <Link
-                to="/progress"
-                search={{ month: currentMonth(), type: "ALL" }}
-              />
-            }
-          >
-            Progress
-          </Button>
         </div>
       }
     >
-      <p className="text-muted-foreground">Hello, {user?.name}.</p>
+      <p className="text-muted-foreground">
+        Hello, {user?.name}. Here&apos;s how your habits are going today.
+      </p>
       {habits.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>
@@ -124,12 +116,12 @@ export function TodayPage() {
         <div className="flex flex-col gap-6">
           <TodaySection
             title="Build"
-            description="Actions you want to complete today."
+            description="Habits to complete today."
             habits={habits.filter((habit) => habit.type === "BUILD")}
           />
           <TodaySection
             title="Break"
-            description="Patterns you are leaving behind today."
+            description="Habits to avoid today."
             habits={habits.filter((habit) => habit.type === "BREAK")}
           />
         </div>
@@ -178,19 +170,19 @@ function TodayHabitCard({ habit }: { habit: TodayHabit }) {
   const label =
     habit.type === "BUILD"
       ? isUndo
-        ? "Undo"
+        ? "Undo completion"
         : "Done"
       : isUndo
         ? "Undo"
         : "Log relapse";
   const stateLabel =
     habit.state === "COMPLETED"
-      ? "Completed today"
+      ? "Completed"
       : habit.state === "PENDING"
         ? "Pending today"
         : habit.state === "RELAPSE"
           ? "Relapse logged today"
-          : "Clean today";
+          : "Clean";
   return (
     <Card>
       <CardHeader>
@@ -210,7 +202,7 @@ function TodayHabitCard({ habit }: { habit: TodayHabit }) {
         <div className="text-muted-foreground flex flex-col gap-1 text-sm">
           <span>
             {habit.type === "BUILD"
-              ? `${habit.streak} completed occurrence${habit.streak === 1 ? "" : "s"} in a row`
+              ? `${habit.streak}-day streak`
               : `${habit.streak}-day clean streak`}
           </span>
           {habit.type === "BUILD" && (
@@ -269,7 +261,7 @@ function localToday(): string {
 
 export function CreateHabitPage() {
   return (
-    <Page title="Create habit">
+    <Page title="Create habit" showBack={true} showNavigation={false}>
       <HabitForm />
     </Page>
   );
@@ -278,7 +270,7 @@ export function CreateHabitPage() {
 export function EditHabitPage({ habitId }: { habitId: string }) {
   const { data: habit } = useSuspenseQuery(habitQueries.detail(habitId));
   return (
-    <Page title="Edit habit">
+    <Page title="Edit habit" showBack={true} showNavigation={false}>
       <HabitForm habit={habit} />
     </Page>
   );
@@ -292,6 +284,7 @@ export function HabitDetailPage({ habitId }: { habitId: string }) {
   return (
     <Page
       title={habit.name}
+      showBack={true}
       action={
         <Button
           variant="outline"
@@ -306,10 +299,9 @@ export function HabitDetailPage({ habitId }: { habitId: string }) {
           <div className="flex items-center gap-2">
             <Badge>{habit.type === "BUILD" ? "Build" : "Break"}</Badge>
             <span className="text-muted-foreground text-sm">
-              Starts {habit.startDate}
+              Started {formatDate(habit.startDate)}
             </span>
           </div>
-          <CardTitle>{habit.name}</CardTitle>
           {habit.description && (
             <CardDescription>{habit.description}</CardDescription>
           )}
@@ -318,7 +310,7 @@ export function HabitDetailPage({ habitId }: { habitId: string }) {
           <CardContent>
             <p className="text-sm font-medium">Active days</p>
             <p className="text-muted-foreground">
-              {habit.scheduleDays.map((day) => weekdayLabels[day]).join(" · ")}
+              {scheduleSummary(habit.scheduleDays)}
             </p>
           </CardContent>
         )}
@@ -383,10 +375,14 @@ export function HabitDetailPage({ habitId }: { habitId: string }) {
 function Page({
   title,
   action,
+  showBack = false,
+  showNavigation = true,
   children,
 }: {
   title: string;
   action?: React.ReactNode;
+  showBack?: boolean;
+  showNavigation?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -396,6 +392,15 @@ function Page({
     >
       <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex flex-col gap-1">
+          {showBack && (
+            <Button
+              variant="link"
+              className="h-auto justify-start gap-1 p-0"
+              render={<Link to="/" />}
+            >
+              <ArrowLeftIcon /> Back
+            </Button>
+          )}
           <Button
             variant="link"
             className="h-auto justify-start p-0"
@@ -411,6 +416,49 @@ function Page({
         </div>
       </header>
       {children}
+      {showNavigation && <BottomNavigation />}
     </main>
   );
+}
+
+function BottomNavigation() {
+  return (
+    <nav
+      aria-label="Primary navigation"
+      className="mt-auto flex justify-center border-t pt-4"
+    >
+      <div className="flex w-full max-w-sm gap-2">
+        <Button className="flex-1" variant="ghost" render={<Link to="/" />}>
+          Today
+        </Button>
+        <Button
+          className="flex-1"
+          variant="ghost"
+          render={
+            <Link
+              to="/progress"
+              search={{ month: currentMonth(), type: "ALL" }}
+            />
+          }
+        >
+          Progress
+        </Button>
+      </div>
+    </nav>
+  );
+}
+
+function formatDate(date: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T00:00:00Z`));
+}
+function scheduleSummary(days: number[]): string {
+  if (days.length === 7) return "Every day";
+  if (days.length === 5 && [1, 2, 3, 4, 5].every((day) => days.includes(day)))
+    return "Weekdays";
+  if (days.length === 2 && [0, 6].every((day) => days.includes(day)))
+    return "Weekends";
+  return days.map((day) => weekdayLabels[day]).join(", ");
 }

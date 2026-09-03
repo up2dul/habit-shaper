@@ -121,7 +121,7 @@ export function HabitForm({ habit }: { habit?: Habit }) {
                 field.state.meta.isTouched && !field.state.meta.isValid
               }
             >
-              <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+              <FieldLabel htmlFor={field.name}>Habit name</FieldLabel>
               <Input
                 id={field.name}
                 value={field.state.value}
@@ -129,6 +129,11 @@ export function HabitForm({ habit }: { habit?: Habit }) {
                 onChange={(event) => field.handleChange(event.target.value)}
                 aria-invalid={
                   field.state.meta.isTouched && !field.state.meta.isValid
+                }
+                placeholder={
+                  form.getFieldValue("type") === "BUILD"
+                    ? "e.g. Read for 20 minutes"
+                    : "e.g. Stop doomscrolling"
                 }
               />
               <FieldError
@@ -169,17 +174,24 @@ export function HabitForm({ habit }: { habit?: Habit }) {
                   </FieldDescription>
                 </>
               ) : (
-                <ToggleGroup
-                  value={[field.state.value]}
-                  onValueChange={(value) => {
-                    const type = value[0] as HabitType | undefined;
-                    if (type) field.handleChange(type);
-                  }}
-                  variant="outline"
-                >
-                  <ToggleGroupItem value="BUILD">Build</ToggleGroupItem>
-                  <ToggleGroupItem value="BREAK">Break</ToggleGroupItem>
-                </ToggleGroup>
+                <>
+                  <ToggleGroup
+                    value={[field.state.value]}
+                    onValueChange={(value) => {
+                      const type = value[0] as HabitType | undefined;
+                      if (type) field.handleChange(type);
+                    }}
+                    variant="outline"
+                  >
+                    <ToggleGroupItem value="BUILD">Build</ToggleGroupItem>
+                    <ToggleGroupItem value="BREAK">Break</ToggleGroupItem>
+                  </ToggleGroup>
+                  <FieldDescription>
+                    {field.state.value === "BUILD"
+                      ? "Track days when you complete this habit."
+                      : "Track clean days and relapses."}
+                  </FieldDescription>
+                </>
               )}
             </FieldSet>
           )}
@@ -229,7 +241,9 @@ export function HabitForm({ habit }: { habit?: Habit }) {
                   <FieldSet>
                     <FieldLegend variant="label">Active days</FieldLegend>
                     <FieldDescription>
-                      Schedule changes apply from today forward.
+                      {habit
+                        ? "Schedule changes apply from today forward."
+                        : "Choose the days you want to track this habit."}
                     </FieldDescription>
                     <ToggleGroup
                       multiple

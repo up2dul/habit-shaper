@@ -72,7 +72,7 @@ export function GoalManager({ habitId }: { habitId: string }) {
             Goals
           </h2>
           <p className="text-muted-foreground text-sm">
-            Set successful-day targets for this habit.
+            Set a target for how many successful days you want to reach.
           </p>
         </div>
         {!adding && (
