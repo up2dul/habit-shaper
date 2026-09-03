@@ -66,25 +66,40 @@ export function TodayPage() {
       title="Today"
       action={
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            disabled={logout.isPending}
-            onClick={async () => {
-              try {
-                await logout.mutateAsync();
-                await navigate({ to: "/login" });
-              } catch (error) {
-                toast.add({
-                  title: "Couldn’t sign out",
-                  description:
-                    error instanceof Error ? error.message : "Try again.",
-                  type: "error",
-                });
-              }
-            }}
-          >
-            Sign out
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger render={<Button variant="outline" />}>
+              Sign out
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to sign out?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={logout.isPending}
+                  onClick={async () => {
+                    try {
+                      await logout.mutateAsync();
+                      await navigate({ to: "/login" });
+                    } catch (error) {
+                      toast.add({
+                        title: "Couldn’t sign out",
+                        description:
+                          error instanceof Error ? error.message : "Try again.",
+                        type: "error",
+                      });
+                    }
+                  }}
+                >
+                  Sign out
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button render={<Link to="/habits/new" />}>
             <PlusIcon data-icon="inline-start" />
             New habit
@@ -388,8 +403,9 @@ function Page({
   return (
     <main
       id="main-content"
-      className={`mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 sm:p-6 ${showNavigation ? "pb-28" : ""}`}
+      className={`relative mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 sm:p-6 ${showNavigation ? "pb-28" : ""}`}
     >
+      <ThemeToggle className="absolute top-4 right-4" />
       <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex flex-col gap-1">
           {showBack && (
@@ -412,10 +428,7 @@ function Page({
           )}
           <h1 className="text-2xl font-medium">{title}</h1>
         </div>
-        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-          <ThemeToggle />
-          {action}
-        </div>
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">{action}</div>
       </header>
       {children}
       {showNavigation && <BottomNavigation />}
@@ -430,7 +443,12 @@ function BottomNavigation() {
       className="bg-background/95 fixed inset-x-0 bottom-0 z-40 flex justify-center border-t px-4 py-3 shadow-[0_-4px_16px_oklch(0_0_0/0.06)] backdrop-blur sm:px-6"
     >
       <div className="flex w-full max-w-xl gap-2">
-        <Button className="flex-1" variant="ghost" render={<Link to="/" />}>
+        <Button
+          className="flex-1"
+          variant="ghost"
+          render={<Link to="/" />}
+          activeProps={{ className: "bg-secondary text-secondary-foreground" }}
+        >
           Today
         </Button>
         <Button
@@ -440,6 +458,9 @@ function BottomNavigation() {
             <Link
               to="/progress"
               search={{ month: currentMonth(), type: "ALL" }}
+              activeProps={{
+                className: "bg-secondary text-secondary-foreground",
+              }}
             />
           }
         >
