@@ -405,7 +405,7 @@ function Page({
       id="main-content"
       className={`relative mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 sm:p-6 ${showNavigation ? "pb-28" : ""}`}
     >
-      <ThemeToggle className="absolute top-4 right-4" />
+      <ThemeToggle className="absolute top-4 right-4 z-10" />
       <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex flex-col gap-1">
           {showBack && (
@@ -446,8 +446,14 @@ function BottomNavigation() {
         <Button
           className="flex-1"
           variant="ghost"
-          render={<Link to="/" />}
-          activeProps={{ className: "bg-secondary text-secondary-foreground" }}
+          render={
+            <Link
+              to="/"
+              activeProps={{
+                className: "bg-secondary text-secondary-foreground",
+              }}
+            />
+          }
         >
           Today
         </Button>

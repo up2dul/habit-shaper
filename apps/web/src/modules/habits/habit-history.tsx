@@ -67,7 +67,7 @@ export function ProgressPage({ search }: { search: ProgressSearch }) {
       id="main-content"
       className="relative mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 pb-28 sm:p-6 sm:pb-28"
     >
-      <ThemeToggle className="absolute top-4 right-4" />
+      <ThemeToggle className="absolute top-4 right-4 z-10" />
       <header className="relative flex items-center justify-between gap-4 pr-12">
         <div className="flex flex-col gap-1">
           <Button
@@ -111,10 +111,14 @@ export function ProgressPage({ search }: { search: ProgressSearch }) {
           <Button
             className="flex-1"
             variant="ghost"
-            render={<Link to="/" />}
-            activeProps={{
-              className: "bg-secondary text-secondary-foreground",
-            }}
+            render={
+              <Link
+                to="/"
+                activeProps={{
+                  className: "bg-secondary text-secondary-foreground",
+                }}
+              />
+            }
           >
             Today
           </Button>
@@ -391,9 +395,12 @@ function HistoryCalendar({
           );
         })}
       </div>
-      <p className="text-muted-foreground text-xs">
-        ✓ completed or clean · × missed or relapse · • pending · — not scheduled
-      </p>
+      <ul className="text-muted-foreground text-xs">
+        <li>✓ completed or clean</li>
+        <li>x missed or relapse</li>
+        <li>• pending</li>
+        <li>— not scheduled</li>
+      </ul>
     </div>
   );
 }
@@ -496,7 +503,7 @@ function Metrics({ habit }: { habit: HistoryHabit }) {
           <CardDescription>Weekly completion</CardDescription>
           <CardTitle>
             {weekly.type === "BUILD"
-              ? `${weekly.completed} completed · ${weekly.missed} missed`
+              ? `${weekly.completed} completed, ${weekly.missed} missed`
               : `${weekly.clean} clean`}
           </CardTitle>
         </CardHeader>

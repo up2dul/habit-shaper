@@ -19,7 +19,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       className={cn("relative", className)}
       aria-label={label}
       aria-pressed={isDark}
-      title={`${label} (D)`}
+      title={label}
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
       <SunIcon
