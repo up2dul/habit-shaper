@@ -3,6 +3,16 @@
 Habit Shaper is a small habit-building and habit-breaking tracker with streaks,
 weekly progress, history, and contextual goals.
 
+## Tech stack
+
+- **Web:** React 19, TypeScript, Vite, Tailwind CSS, shadcn/ui, and TanStack
+  Router, Query, and Form
+- **API:** Node.js and Hono, with Zod validation and HTTP-only session
+  authentication
+- **Data:** MySQL and Drizzle ORM
+- **Delivery:** Docker Compose and Nginx with same-origin `/api` proxying
+- **Tooling:** pnpm workspaces, Vitest, Oxlint, Oxfmt, and Lefthook
+
 ## Getting started
 
 ### Clone the repository
