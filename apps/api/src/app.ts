@@ -1,5 +1,7 @@
 import { Hono } from "hono";
+import { except } from "hono/combine";
 import { cors } from "hono/cors";
+import { logger } from "hono/logger";
 
 import { env } from "./config/env.js";
 import { canQueryDatabase } from "./db/health.js";
@@ -27,6 +29,10 @@ export function createApp(
   goalsService: GoalsServiceContract = new GoalsService()
 ) {
   const app = new Hono();
+
+  if (env.nodeEnv !== "test") {
+    app.use("*", except("/health", logger()));
+  }
 
   app.use("*", async (c, next) => {
     if (["POST", "PATCH", "DELETE"].includes(c.req.method)) {
