@@ -65,9 +65,10 @@ export function ProgressPage({ search }: { search: ProgressSearch }) {
   return (
     <main
       id="main-content"
-      className="mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 sm:p-6"
+      className="relative mx-auto flex min-h-svh w-full max-w-xl flex-col gap-6 p-4 pb-28 sm:p-6 sm:pb-28"
     >
-      <header className="flex items-center justify-between gap-4">
+      <ThemeToggle className="absolute top-4 right-4 z-10" />
+      <header className="relative flex items-center justify-between gap-4 pr-12">
         <div className="flex flex-col gap-1">
           <Button
             variant="link"
@@ -78,7 +79,6 @@ export function ProgressPage({ search }: { search: ProgressSearch }) {
           </Button>
           <h1 className="text-2xl font-medium">Progress</h1>
         </div>
-        <ThemeToggle />
       </header>
       <ToggleGroup
         value={[search.type]}
@@ -103,6 +103,42 @@ export function ProgressPage({ search }: { search: ProgressSearch }) {
       <Suspense fallback={<HistorySkeleton showFilter />}>
         <ProgressHistory search={search} update={update} />
       </Suspense>
+      <nav
+        aria-label="Primary navigation"
+        className="bg-background/95 fixed inset-x-0 bottom-0 z-40 flex justify-center border-t px-4 py-3 shadow-[0_-4px_16px_oklch(0_0_0/0.06)] backdrop-blur sm:px-6"
+      >
+        <div className="flex w-full max-w-sm gap-2">
+          <Button
+            className="flex-1"
+            variant="ghost"
+            render={
+              <Link
+                to="/"
+                activeProps={{
+                  className: "bg-secondary text-secondary-foreground",
+                }}
+              />
+            }
+          >
+            Today
+          </Button>
+          <Button
+            className="flex-1"
+            variant="ghost"
+            render={
+              <Link
+                to="/progress"
+                search={{ month: currentMonth(), type: "ALL" }}
+                activeProps={{
+                  className: "bg-secondary text-secondary-foreground",
+                }}
+              />
+            }
+          >
+            Progress
+          </Button>
+        </div>
+      </nav>
     </main>
   );
 }
@@ -253,12 +289,12 @@ function HistoryView({
             {longDate(selectedDate)}
           </h2>
           <p className="text-muted-foreground text-sm">
-            Tracking records for the selected date.
+            Habit activity for this date.
           </p>
         </div>
         {selected.length === 0 ? (
           <p className="text-muted-foreground text-sm">
-            No applicable habits on this date.
+            No habits scheduled for this date.
           </p>
         ) : (
           selected.map(({ habit, day }) => (
@@ -359,10 +395,12 @@ function HistoryCalendar({
           );
         })}
       </div>
-      <p className="text-muted-foreground text-xs">
-        ✓ completed or clean · × missed or relapse · • pending · — not
-        applicable
-      </p>
+      <ul className="text-muted-foreground text-xs">
+        <li>✓ completed or clean</li>
+        <li>x missed or relapse</li>
+        <li>• pending</li>
+        <li>— not scheduled</li>
+      </ul>
     </div>
   );
 }
@@ -400,7 +438,9 @@ function HistoryRecord({
           <div>
             <CardTitle>{habit.name}</CardTitle>
             <CardDescription>
-              {habit.type === "BUILD" ? "Build habit" : "Break habit"}
+              {habit.type === "BUILD"
+                ? `${habit.streak}-day streak`
+                : `${habit.streak}-day clean streak`}
             </CardDescription>
           </div>
           <Badge variant="secondary">{stateLabel(day.state)}</Badge>
@@ -453,19 +493,17 @@ function Metrics({ habit }: { habit: HistoryHabit }) {
       <Card>
         <CardHeader>
           <CardDescription>
-            {habit.type === "BUILD" ? "Build streak" : "Clean streak"}
+            {habit.type === "BUILD" ? "Current streak" : "Clean streak"}
           </CardDescription>
           <CardTitle>{habit.streak}</CardTitle>
         </CardHeader>
       </Card>
       <Card>
         <CardHeader>
-          <CardDescription>
-            {habit.type === "BUILD" ? "This week" : "This week"}
-          </CardDescription>
+          <CardDescription>Weekly completion</CardDescription>
           <CardTitle>
             {weekly.type === "BUILD"
-              ? `${weekly.completed}/${weekly.completed + weekly.missed}`
+              ? `${weekly.completed} completed, ${weekly.missed} missed`
               : `${weekly.clean} clean`}
           </CardTitle>
         </CardHeader>
