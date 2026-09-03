@@ -68,6 +68,24 @@ services:
       - "${API_PORT:-3000}:3000"
     restart: unless-stopped
 
+  seed:
+    profiles: ["tools"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ["node", "apps/api/dist/db/seed.js"]
+    environment:
+      NODE_ENV: development
+      DATABASE_NAME: ${MYSQL_DATABASE:-habit_shaper}
+      DATABASE_HOST: mysql
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD:-habit_shaper}
+      DATABASE_PORT: 3306
+      DATABASE_USER: ${MYSQL_USER:-habit_shaper}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
   web:
     build:
       context: .
