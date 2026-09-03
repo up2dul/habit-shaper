@@ -22,11 +22,10 @@ cd habit-shaper
 ### Local setup
 
 Node.js 22+ and pnpm 10+ are required for direct local development. Install
-dependencies and create the local environment file:
+dependencies:
 
 ```bash
 pnpm install
-cp .env.example .env
 ```
 
 ### Local run
@@ -40,18 +39,24 @@ pnpm dev:web
 
 The web app is available at <http://localhost:5173>. Direct local development
 uses the API at <http://localhost:3000> and requires a running MySQL instance.
+When `VITE_API_URL` is unset in development, the web app uses that address as a
+code-level fallback because the standalone Vite server does not provide the
+`/api` reverse proxy. The `pnpm dev:web` command starts a development server; it
+is not a production deployment command.
 
 ### Run through Docker
 
 The primary reviewer path requires only Docker and Docker Compose.
 
 ```bash
-docker compose up --build -d
+docker compose up -d
 ```
 
 Open <http://localhost:5173>. Migrations run automatically before the API
 starts. The Compose defaults require no `.env` file; copy `.env.example` only
-when you want to customize them. To stop the detached stack, run:
+when you want to customize them. In this workflow, `VITE_API_URL=/api` sends
+browser requests to the web app's own origin, where Nginx proxies them to the
+API container. To stop the detached stack, run:
 
 ```bash
 docker compose down
@@ -73,32 +78,35 @@ To reset local data, including the MySQL volume, run:
 docker compose down -v
 ```
 
-The Compose file binds MySQL to `127.0.0.1:3306` (or `MYSQL_PORT`), so it is
-available for local debugging but not on external network interfaces. The API
-port is also exposed for local debugging. Production deployment concerns such
-as HTTPS termination, secrets, backups, and monitoring are outside this
-project's current scope.
+The Compose file binds MySQL and the API to the `127.0.0.1` loopback interface
+(using `MYSQL_PORT` and `API_PORT`), so they remain available for local
+debugging without being exposed on external network interfaces. Production
+deployment concerns such as HTTPS termination, secrets, backups, and monitoring
+are outside this project's current scope.
 
 ## Environment variables
 
 Copy `.env.example` to `.env` for local Compose. Values with local defaults can
 be left unchanged.
 
-| Variable              | Purpose                                                                             |
-| --------------------- | ----------------------------------------------------------------------------------- |
-| `WEB_PORT`            | Host port for the web UI; default `5173`.                                           |
-| `API_PORT`            | Host port for local API debugging; default `3000`.                                  |
-| `WEB_ORIGIN`          | Browser origin accepted for unsafe API requests.                                    |
-| `VITE_API_URL`        | Public API base URL compiled into the web app; `/api` enables same-origin proxying. |
-| `MYSQL_PORT`          | Loopback-only host port for local MySQL debugging; default `3306`.                  |
-| `MYSQL_DATABASE`      | MySQL database and API database name.                                               |
-| `MYSQL_USER`          | MySQL application user and API database user.                                       |
-| `MYSQL_PASSWORD`      | MySQL application password and API database password.                               |
-| `MYSQL_ROOT_PASSWORD` | MySQL root bootstrap password.                                                      |
+| Variable              | Purpose                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------- |
+| `WEB_PORT`            | Host port for the web UI; default `5173`.                                                               |
+| `API_PORT`            | Host port for local API debugging; default `3000`.                                                      |
+| `WEB_ORIGIN`          | Browser origin accepted for unsafe API requests.                                                        |
+| `VITE_API_URL`        | Browser-facing API base URL compiled into the web app; Compose defaults to the Nginx proxy path `/api`. |
+| `MYSQL_PORT`          | Loopback-only host port for local MySQL debugging; default `3306`.                                      |
+| `MYSQL_DATABASE`      | MySQL database and API database name.                                                                   |
+| `MYSQL_USER`          | MySQL application user and API database user.                                                           |
+| `MYSQL_PASSWORD`      | MySQL application password and API database password.                                                   |
+| `MYSQL_ROOT_PASSWORD` | MySQL root bootstrap password.                                                                          |
 
 Do not commit `.env` or production secrets. In production, provide the
 database values and `WEB_ORIGIN` through the deployment environment rather than
-using the example defaults.
+using the example defaults. Deploy the built web assets behind a web server or
+reverse proxy, and set `VITE_API_URL` explicitly when creating the production
+build. The provided web Docker image does this with `/api` by default. Complete
+production deployment concerns remain outside this project's current scope.
 
 ## Architecture
 
