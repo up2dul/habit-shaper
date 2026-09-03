@@ -12,4 +12,11 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
+  server: {
+    // pnpm resolves @fontsource files through the workspace-level node_modules.
+    // Allow Vite to serve those real paths when running the web app directly.
+    fs: {
+      allow: [path.resolve(import.meta.dirname, "../..")],
+    },
+  },
 });
